@@ -18,17 +18,17 @@ export const LEVEL_LABEL: Record<Level, string> = {
 
 /** 給徽章用的 Tailwind class */
 export const LEVEL_BADGE: Record<Level, string> = {
-  locked: 'bg-slate-800 text-slate-500',
-  novice: 'bg-slate-700 text-slate-300',
-  familiar: 'bg-sky-500/20 text-sky-300',
-  mastered: 'bg-emerald-500/20 text-emerald-300',
+  locked: 'bg-surface-2 text-ink-4',
+  novice: 'bg-surface-3 text-ink-2',
+  familiar: 'bg-accent/20 text-accent',
+  mastered: 'bg-ok/20 text-ok-text',
 }
 
 export const LEVEL_BAR: Record<Level, string> = {
-  locked: 'bg-slate-700',
-  novice: 'bg-slate-500',
-  familiar: 'bg-sky-500',
-  mastered: 'bg-emerald-500',
+  locked: 'bg-surface-3',
+  novice: 'bg-ink-4',
+  familiar: 'bg-accent',
+  mastered: 'bg-ok',
 }
 
 export function levelOf(score: number | undefined, unlocked: boolean): Level {

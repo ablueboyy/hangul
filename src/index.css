@@ -1,16 +1,113 @@
 @import 'tailwindcss';
 
+/*
+ * 配色一律走語意化 token，元件裡不再出現 slate-800 這種寫法。
+ * 深色是預設值；淺色（丹青）在下面整組覆蓋掉。
+ * 要再加第三套配色，就再複製一個 [data-theme="..."] 區塊即可。
+ */
 @theme {
   --font-sans:
     'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC',
     'Microsoft JhengHei', sans-serif;
   /* 韓文字形交給系統字體，iOS 上是 Apple SD Gothic Neo */
-  --font-kr:
-    'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  --font-kr: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+
+  /* 版面層次：頁面 → 卡片 → 卡片裡的元件 → 按下去 → 凹槽 */
+  --color-page: #0b1120;
+  --color-surface: #161f30;
+  --color-surface-2: #1e293b;
+  --color-surface-3: #334155;
+  --color-sunken: #0f172a;
+
+  --color-line: #334155;
+  --color-line-soft: #1e293b;
+  --color-line-strong: #475569;
+
+  /* 文字由深到淺：ink 最清楚，ink-5 是「未解鎖」那種刻意看不清的 */
+  --color-ink: #ffffff;
+  --color-ink-2: #e2e8f0;
+  --color-ink-3: #94a3b8;
+  --color-ink-4: #64748b;
+  --color-ink-5: #3f4d63;
+
+  /* 疊在彩色按鈕上的文字，兩套主題都要是亮色 */
+  --color-oncolor: #ffffff;
+
+  --color-accent: #38bdf8;
+  --color-accent-mid: #0369a1;
+  --color-accent-deep: #075985;
+  --color-accent-pale: #e0f2fe;
+
+  --color-ok: #10b981;
+  --color-ok-text: #6ee7b7;
+  --color-ok-deep: #047857;
+  --color-ok-press: #065f46;
+
+  --color-bad: #f43f5e;
+  --color-bad-text: #fda4af;
+  --color-bad-deep: #e11d48;
+  --color-bad-press: #be123c;
+
+  --color-warn: #f59e0b;
+  --color-warn-text: #fde68a;
+  --color-warn-deep: #b45309;
+  --color-warn-press: #92400e;
+
+  --color-scrim: rgb(0 0 0 / 0.6);
+}
+
+/*
+ * 丹青：韓紙底色配韓國傳統建築彩繪的青綠與朱紅。
+ * 深色版的層次是「越上層越亮」，淺色版要反過來變成「越上層越白」。
+ */
+:root[data-theme='light'] {
+  --color-page: #f4efe3;
+  --color-surface: #fffdf7;
+  --color-surface-2: #f0e9da;
+  --color-surface-3: #e3d9c4;
+  --color-sunken: #ece4d3;
+
+  --color-line: #ded3bd;
+  --color-line-soft: #eae1cd;
+  --color-line-strong: #c9bda2;
+
+  --color-ink: #2b2621;
+  --color-ink-2: #4a4238;
+  --color-ink-3: #6e6353;
+  --color-ink-4: #9a8f7c;
+  --color-ink-5: #c2b7a0;
+
+  --color-oncolor: #fffdf7;
+
+  --color-accent: #155e6b;
+  --color-accent-mid: #1c5f6b;
+  --color-accent-deep: #164d57;
+  --color-accent-pale: #d7edf1;
+
+  --color-ok: #3d7a44;
+  --color-ok-text: #2f6135;
+  --color-ok-deep: #35693b;
+  --color-ok-press: #2b5530;
+
+  --color-bad: #c0392b;
+  --color-bad-text: #9c2c20;
+  --color-bad-deep: #a83224;
+  --color-bad-press: #8c2a1e;
+
+  --color-warn: #b8860b;
+  --color-warn-text: #7a5a08;
+  --color-warn-deep: #8a6208;
+  --color-warn-press: #6f4e06;
+
+  --color-scrim: rgb(43 38 33 / 0.45);
 }
 
 :root {
   color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 html,
@@ -21,9 +118,9 @@ body,
 
 body {
   margin: 0;
-  background: #0b1120;
-  color: #e2e8f0;
-  /* iOS 下拉時不要出現橡皮筋回彈的白邊 */
+  background: var(--color-page);
+  color: var(--color-ink-2);
+  /* iOS 下拉時不要出現橡皮筋回彈的異色邊 */
   overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
 }

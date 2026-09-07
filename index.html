@@ -4,18 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
-    <!-- viewport-fit=cover 讓版面延伸到 iPhone 瀏海與底部橫條區域 -->
+    <!-- viewport-fit=cover 讓底部橫條區域也能算進安全區 -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
     />
+    <!-- 這個值會被 useTheme 依照目前主題改寫 -->
     <meta name="theme-color" content="#0b1120" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!--
+      狀態列用 default：深淺兩套主題都不會出現「白字疊在淺色背景上看不見」的情況。
+      （black-translucent 會強制白色的時間與電量，換成丹青主題就消失了。）
+    -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="韓文字母" />
     <meta name="description" content="從零開始學會韓文 40 個字母與拼音組合，附發音、記憶法與間隔複習。" />
     <title>韓文字母練習</title>
+    <script>
+      // 在第一次繪製前就決定主題，否則會先閃一下深色再跳成淺色。
+      // key 要和 src/hooks/useTheme.ts 保持一致。
+      ;(function () {
+        var theme = 'dark'
+        try {
+          var pref = localStorage.getItem('hangul.theme.v1') || 'system'
+          if (pref === 'system') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          } else if (pref === 'light' || pref === 'dark') {
+            theme = pref
+          }
+        } catch (e) {
+          // 讀不到 localStorage 就用預設值
+        }
+        document.documentElement.dataset.theme = theme
+        if (theme === 'light') {
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', '#f4efe3')
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

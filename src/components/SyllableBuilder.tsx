@@ -33,11 +33,11 @@ export function SyllableBuilder({ unlockedChars }: Props) {
       <button
         type="button"
         onClick={() => syllable && speak(syllable)}
-        className="flex w-full flex-col items-center gap-1 rounded-3xl border border-slate-700 bg-slate-800/60 py-6 active:bg-slate-800"
+        className="flex w-full flex-col items-center gap-1 rounded-3xl border border-line bg-surface py-6 active:bg-surface-2"
       >
-        <div className="font-kr text-[5rem] leading-none text-white">{syllable}</div>
-        <div className="text-lg text-sky-400">{roman}</div>
-        <div className="font-kr text-xs text-slate-500">
+        <div className="font-kr text-[5rem] leading-none text-ink">{syllable}</div>
+        <div className="text-lg text-accent">{roman}</div>
+        <div className="font-kr text-xs text-ink-4">
           {safeInitial} + {safeMedial}　🔊 點一下發音
         </div>
       </button>
@@ -69,9 +69,9 @@ function ChipRow({
 }) {
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold text-slate-300">
+      <h3 className="mb-2 text-sm font-semibold text-ink-2">
         {title}
-        {hint && <span className="ml-2 text-xs font-normal text-slate-500">{hint}</span>}
+        {hint && <span className="ml-2 text-xs font-normal text-ink-4">{hint}</span>}
       </h3>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
@@ -81,8 +81,8 @@ function ChipRow({
             onClick={() => onPick(item)}
             className={`font-kr h-11 w-11 rounded-xl border text-xl active:scale-95 ${
               item === active
-                ? 'border-sky-500 bg-sky-500/20 text-sky-300'
-                : 'border-slate-700 bg-slate-800/60 text-white'
+                ? 'border-accent bg-accent/20 text-accent'
+                : 'border-line bg-surface text-ink'
             }`}
           >
             {item}

@@ -128,37 +128,37 @@ export function PracticeView({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 text-xs text-slate-400">
+      <div className="flex items-center gap-3 text-xs text-ink-3">
         <span>
           {index + 1} / {session.questions.length}
         </span>
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-800">
+        <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
           <div
-            className="h-full bg-sky-500 transition-[width]"
+            className="h-full bg-accent transition-[width]"
             style={{ width: `${(index / session.questions.length) * 100}%` }}
           />
         </div>
-        <button type="button" onClick={() => setSession(null)} className="text-slate-500">
+        <button type="button" onClick={() => setSession(null)} className="text-ink-4">
           結束
         </button>
       </div>
 
-      <p className="text-center text-sm text-slate-300">{q.title}</p>
+      <p className="text-center text-sm text-ink-2">{q.title}</p>
 
       <button
         type="button"
         disabled={!q.speakText}
         onClick={() => q.speakText && speak(q.speakText)}
-        className="flex min-h-40 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-slate-700 bg-slate-800/60 py-6 disabled:active:bg-slate-800/60"
+        className="flex min-h-40 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-line bg-surface py-6 disabled:active:bg-surface"
       >
         <span
-          className={`leading-none text-white ${
+          className={`leading-none text-ink ${
             q.promptKorean ? 'font-kr text-[5.5rem]' : 'text-5xl'
           }`}
         >
           {q.prompt}
         </span>
-        {q.speakText && <span className="text-xs text-slate-500">🔊 點一下再聽一次</span>}
+        {q.speakText && <span className="text-xs text-ink-4">🔊 點一下再聽一次</span>}
       </button>
 
       <div className="grid grid-cols-2 gap-3">
@@ -166,12 +166,12 @@ export function PracticeView({
           const isAnswer = option.key === q.answerKey
           const chosen = option.key === picked
           const style = !picked
-            ? 'border-slate-700 bg-slate-800/60 text-white'
+            ? 'border-line bg-surface text-ink'
             : isAnswer
-              ? 'border-emerald-500 bg-emerald-600/25 text-emerald-300'
+              ? 'border-ok bg-ok/25 text-ok-text'
               : chosen
-                ? 'border-rose-500 bg-rose-600/25 text-rose-300'
-                : 'border-slate-800 bg-slate-800/30 text-slate-600'
+                ? 'border-bad bg-bad/25 text-bad-text'
+                : 'border-line-soft bg-surface/60 text-ink-5'
           return (
             <button
               key={option.key}
@@ -192,8 +192,8 @@ export function PracticeView({
           <div
             className={`rounded-xl p-3 text-sm leading-relaxed ${
               picked === q.answerKey
-                ? 'bg-emerald-500/10 text-emerald-200'
-                : 'bg-rose-500/10 text-rose-200'
+                ? 'bg-ok/15 text-ok-text'
+                : 'bg-bad/15 text-bad-text'
             }`}
           >
             <span className="font-semibold">
@@ -207,7 +207,7 @@ export function PracticeView({
               setIndex((i) => i + 1)
               setPicked(null)
             }}
-            className="w-full rounded-xl bg-sky-600 py-4 font-semibold text-white active:bg-sky-700"
+            className="w-full rounded-xl bg-accent-mid py-4 font-semibold text-oncolor active:bg-accent-deep"
           >
             {index + 1 >= session.questions.length ? '看結果' : '下一題'}
           </button>
@@ -232,20 +232,20 @@ function StartScreen({
 
   return (
     <div className="space-y-5">
-      <p className="text-sm leading-relaxed text-slate-400">
+      <p className="text-sm leading-relaxed text-ink-3">
         題目只會用已經解鎖的字母。答對該字母 +1 分，答錯 −1 分，滿 6 分就是精通。拼字題一次會考到子音和母音兩個字母。
       </p>
 
       <button
         type="button"
         onClick={() => onStart('group')}
-        className="w-full rounded-2xl bg-sky-600 p-4 text-left active:bg-sky-700"
+        className="w-full rounded-2xl bg-accent-mid p-4 text-left active:bg-accent-deep"
       >
-        <div className="text-base font-semibold text-white">
+        <div className="text-base font-semibold text-ink">
           練這一組（第 {currentGroup.id} 組・{currentGroup.title}）
         </div>
-        <div className="font-kr mt-1 text-xl text-sky-100">{currentGroup.chars.join('　')}</div>
-        <div className="mt-1 text-xs text-sky-200/80">
+        <div className="font-kr mt-1 text-xl text-accent-pale">{currentGroup.chars.join('　')}</div>
+        <div className="mt-1 text-xs text-accent-pale/90">
           {remaining.length > 0 ? `還有 ${remaining.length} 個沒精通` : '這組已全部精通，可以純複習'}
         </div>
       </button>
@@ -253,10 +253,10 @@ function StartScreen({
       <button
         type="button"
         onClick={() => onStart('all')}
-        className="w-full rounded-2xl border border-slate-700 bg-slate-800/60 p-4 text-left active:bg-slate-800"
+        className="w-full rounded-2xl border border-line bg-surface p-4 text-left active:bg-surface-2"
       >
-        <div className="text-base font-semibold text-white">複習全部已解鎖</div>
-        <div className="mt-1 text-xs text-slate-400">
+        <div className="text-base font-semibold text-ink">複習全部已解鎖</div>
+        <div className="mt-1 text-xs text-ink-3">
           {unlockedChars.length} 個字母混合出題，把舊的也顧一下
         </div>
       </button>
@@ -294,24 +294,24 @@ function Summary({
     <div className="space-y-5">
       <div className="text-center">
         <div className="text-6xl">{correctCount === total ? '🎉' : '👏'}</div>
-        <h2 className="mt-2 text-xl font-semibold text-white">這一輪結束</h2>
-        <p className="text-slate-300">
-          答對 <span className="font-semibold text-emerald-400">{correctCount}</span> / {total}
+        <h2 className="mt-2 text-xl font-semibold text-ink">這一輪結束</h2>
+        <p className="text-ink-2">
+          答對 <span className="font-semibold text-ok-text">{correctCount}</span> / {total}
         </p>
       </div>
 
       {unlockedNew && (
-        <div className="animate-pop rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-center">
+        <div className="animate-pop rounded-2xl border border-ok/60 bg-ok/15 p-4 text-center">
           <div className="text-2xl">🔓</div>
-          <div className="mt-1 font-semibold text-emerald-300">
+          <div className="mt-1 font-semibold text-ok-text">
             解鎖第 {newGroup.id} 組・{newGroup.title}
           </div>
-          <div className="font-kr mt-1 text-xl text-white">{newGroup.chars.join('　')}</div>
+          <div className="font-kr mt-1 text-xl text-ink">{newGroup.chars.join('　')}</div>
         </div>
       )}
 
       <section>
-        <h3 className="mb-2 text-sm font-semibold text-slate-300">這一輪的字母</h3>
+        <h3 className="mb-2 text-sm font-semibold text-ink-2">這一輪的字母</h3>
         <div className="space-y-2">
           {touched.map(({ char, before, after }) => {
             const letter = LETTER_BY_CHAR.get(char)!
@@ -322,18 +322,18 @@ function Summary({
                 key={char}
                 type="button"
                 onClick={() => speak(letter.name)}
-                className="flex w-full items-center gap-3 rounded-xl bg-slate-800/60 p-3 text-left active:bg-slate-700"
+                className="flex w-full items-center gap-3 rounded-xl bg-surface p-3 text-left active:bg-surface-3"
               >
-                <span className="font-kr w-9 text-center text-2xl text-white">{char}</span>
-                <span className="text-sm text-sky-400">{letter.roman}</span>
+                <span className="font-kr w-9 text-center text-2xl text-ink">{char}</span>
+                <span className="text-sm text-accent">{letter.roman}</span>
                 <span
                   className={`ml-auto text-xs ${
-                    delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-rose-400' : 'text-slate-500'
+                    delta > 0 ? 'text-ok-text' : delta < 0 ? 'text-bad-text' : 'text-ink-4'
                   }`}
                 >
                   {delta > 0 ? `+${delta}` : delta}
                 </span>
-                <span className="w-12 text-right text-xs text-slate-400">
+                <span className="w-12 text-right text-xs text-ink-3">
                   {LEVEL_LABEL[level]}
                 </span>
               </button>
@@ -345,14 +345,14 @@ function Summary({
       <button
         type="button"
         onClick={onAgain}
-        className="w-full rounded-xl bg-sky-600 py-4 font-semibold text-white active:bg-sky-700"
+        className="w-full rounded-xl bg-accent-mid py-4 font-semibold text-oncolor active:bg-accent-deep"
       >
         再來一輪
       </button>
       <button
         type="button"
         onClick={onExit}
-        className="w-full rounded-xl bg-slate-800 py-3 text-slate-300 active:bg-slate-700"
+        className="w-full rounded-xl bg-surface-2 py-3 text-ink-2 active:bg-surface-3"
       >
         回到選單
       </button>

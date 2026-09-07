@@ -22,15 +22,15 @@ export function ChartView({ state, isUnlocked }: Props) {
 
   return (
     <div className="space-y-7">
-      <p className="text-sm leading-relaxed text-slate-400">
+      <p className="text-sm leading-relaxed text-ink-3">
         40 個字母的全景圖。已解鎖的點下去會唸出來並打開發音重點，還沒解鎖的會告訴你在第幾組。
       </p>
 
       {groups.map(({ type, items }) => (
         <section key={type}>
-          <h2 className="mb-3 flex items-baseline gap-2 text-sm font-semibold text-slate-300">
+          <h2 className="mb-3 flex items-baseline gap-2 text-sm font-semibold text-ink-2">
             {LETTER_TYPE_LABEL[type]}
-            <span className="text-xs font-normal text-slate-500">
+            <span className="text-xs font-normal text-ink-4">
               {items.filter((l) => isUnlocked(l.char)).length} / {items.length} 已解鎖
             </span>
           </h2>
@@ -49,18 +49,18 @@ export function ChartView({ state, isUnlocked }: Props) {
                   }}
                   className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-xl border active:scale-95 ${
                     unlocked
-                      ? 'border-slate-700/70 bg-slate-800/70 active:bg-slate-700'
-                      : 'border-slate-800 bg-slate-900/60'
+                      ? 'border-line/70 bg-surface-2 active:bg-surface-3'
+                      : 'border-line-soft bg-sunken/70'
                   }`}
                 >
                   <span
                     className={`font-kr text-3xl leading-none ${
-                      unlocked ? 'text-white' : 'text-slate-700'
+                      unlocked ? 'text-ink' : 'text-ink-5'
                     }`}
                   >
                     {letter.char}
                   </span>
-                  <span className="mt-1 text-[10px] text-slate-500">
+                  <span className="mt-1 text-[10px] text-ink-4">
                     {unlocked ? letter.roman : '🔒'}
                   </span>
                   {unlocked && (
