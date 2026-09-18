@@ -15,6 +15,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
+      // 發音音檔也要進離線快取（452 個約 2MB），不然裝成 App 後沒網路就啞了
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,mp3}'],
+      },
       manifest: {
         name: '韓文字母練習',
         short_name: '韓文字母',

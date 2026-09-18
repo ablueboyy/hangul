@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { Letter } from '../data/hangul'
-import { LETTER_TYPE_LABEL } from '../data/hangul'
+import { LETTER_TYPE_LABEL, letterSound } from '../data/hangul'
 import { GROUP_OF_CHAR } from '../data/groups'
 import { speak } from '../lib/speech'
 import { LEVEL_BADGE, LEVEL_BAR, LEVEL_LABEL, MAX_SCORE, levelOf, ratio } from '../lib/mastery'
@@ -22,6 +22,9 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
   }, [onClose])
 
   const level = levelOf(score, unlocked)
+  const sound = letterSound(letter)
+  // 子音的名字和它的音不一樣（ㅅ 叫 시옷，但音是 s），兩者要分開呈現
+  const nameDiffers = sound !== letter.name
 
   return (
     <div
@@ -38,7 +41,7 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
           <button
             type="button"
             disabled={!unlocked}
-            onClick={() => speak(letter.name)}
+            onClick={() => speak(sound)}
             className={`font-kr flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-6xl ${
               unlocked ? 'text-ink active:scale-95' : 'text-ink-5'
             }`}
@@ -50,8 +53,13 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
             <div className="text-xs text-ink-3">{LETTER_TYPE_LABEL[letter.type]}</div>
             {unlocked ? (
               <>
-                <div className="font-kr text-2xl font-semibold text-ink">{letter.name}</div>
+                <div className="font-kr text-2xl font-semibold text-ink">{sound}</div>
                 <div className="text-lg text-accent">{letter.roman}</div>
+                {nameDiffers && (
+                  <div className="text-xs text-ink-4">
+                    字母名字：<span className="font-kr">{letter.name}</span>
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-lg font-semibold text-ink-4">還沒解鎖</div>
@@ -69,13 +77,30 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
           </p>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => speak(letter.name)}
-              className="mt-4 w-full rounded-xl bg-accent-mid py-3 font-medium text-oncolor active:bg-accent-deep"
-            >
-              🔊 播放發音
-            </button>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => speak(sound)}
+                className="flex-1 rounded-xl bg-accent-mid py-3 font-medium text-oncolor active:bg-accent-deep"
+              >
+                🔊 發音 <span className="font-kr">{sound}</span>
+              </button>
+              {nameDiffers && (
+                <button
+                  type="button"
+                  onClick={() => speak(letter.name)}
+                  className="rounded-xl bg-surface-2 px-4 py-3 text-sm text-ink-2 active:bg-surface-3"
+                >
+                  名字 <span className="font-kr">{letter.name}</span>
+                </button>
+              )}
+            </div>
+            {nameDiffers && (
+              <p className="mt-2 text-xs leading-relaxed text-ink-4">
+                子音沒辦法單獨發音，所以用「{sound}」示範它配上母音 ㅏ 的樣子。
+                「{letter.name}」只是這個字母的名字，聽起來跟它的音不一樣。
+              </p>
+            )}
 
             <dl className="mt-5 space-y-4 text-sm">
               <div>

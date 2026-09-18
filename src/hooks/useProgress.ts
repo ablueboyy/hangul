@@ -7,6 +7,8 @@ const STORAGE_KEY = 'hangul.progress.v2'
 export interface ProgressState {
   /** 字母 → 熟練度分數 0..MAX_SCORE */
   scores: Record<string, number>
+  /** 單字（韓文原文）→ 熟練度分數 0..MAX_SCORE。和字母的解鎖闖關無關 */
+  vocabScores: Record<string, number>
   /** 已解鎖幾組（至少 1） */
   unlockedCount: number
   /** YYYY-MM-DD */
@@ -20,6 +22,7 @@ export interface ProgressState {
 
 const emptyState = (): ProgressState => ({
   scores: {},
+  vocabScores: {},
   unlockedCount: 1,
   lastStudyDate: null,
   streak: 0,
@@ -43,6 +46,7 @@ function load(): ProgressState {
       ...emptyState(),
       ...parsed,
       scores: parsed.scores ?? {},
+      vocabScores: parsed.vocabScores ?? {},
       unlockedCount: Math.min(Math.max(parsed.unlockedCount ?? 1, 1), GROUPS.length),
     }
   } catch {
@@ -62,6 +66,24 @@ function unlockIfComplete(state: ProgressState): number {
   return done ? Math.min(state.unlockedCount + 1, GROUPS.length) : state.unlockedCount
 }
 
+/** 答完一題共通的部分：連續天數和總計，字母題和單字題都要算 */
+function tally(prev: ProgressState, correct: boolean): ProgressState {
+  const today = dateKey()
+  const streak =
+    prev.lastStudyDate === today
+      ? prev.streak
+      : prev.lastStudyDate === yesterdayKey()
+        ? prev.streak + 1
+        : 1
+  return {
+    ...prev,
+    lastStudyDate: today,
+    streak,
+    totalAnswers: prev.totalAnswers + 1,
+    totalCorrect: prev.totalCorrect + (correct ? 1 : 0),
+  }
+}
+
 export function useProgress() {
   const [state, setState] = useState<ProgressState>(load)
 
@@ -73,29 +95,22 @@ export function useProgress() {
     }
   }, [state])
 
-  /** 答完一題：把這題考到的每個字母都加減分 */
+  /** 答完一題字母題：把這題考到的每個字母都加減分 */
   const record = useCallback((targets: string[], correct: boolean) => {
     setState((prev) => {
       const scores = { ...prev.scores }
       for (const char of targets) scores[char] = nextScore(scores[char], correct)
-
-      const today = dateKey()
-      const streak =
-        prev.lastStudyDate === today
-          ? prev.streak
-          : prev.lastStudyDate === yesterdayKey()
-            ? prev.streak + 1
-            : 1
-
-      const next: ProgressState = {
-        ...prev,
-        scores,
-        lastStudyDate: today,
-        streak,
-        totalAnswers: prev.totalAnswers + 1,
-        totalCorrect: prev.totalCorrect + (correct ? 1 : 0),
-      }
+      const next = { ...tally(prev, correct), scores }
       return { ...next, unlockedCount: unlockIfComplete(next) }
+    })
+  }, [])
+
+  /** 答完一題單字題。單字不參與字母的解鎖闖關，所以不動 unlockedCount */
+  const recordVocab = useCallback((words: string[], correct: boolean) => {
+    setState((prev) => {
+      const vocabScores = { ...prev.vocabScores }
+      for (const ko of words) vocabScores[ko] = nextScore(vocabScores[ko], correct)
+      return { ...tally(prev, correct), vocabScores }
     })
   }, [])
 
@@ -122,6 +137,7 @@ export function useProgress() {
   return {
     state,
     record,
+    recordVocab,
     reset,
     restore,
     markBackedUp,

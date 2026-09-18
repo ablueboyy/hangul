@@ -2,9 +2,10 @@
  * 出題引擎。只會用已解鎖的字母出題，而且每一題都有唯一正確答案。
  * 每題會標記它「考到哪幾個字母」（targets），答完就照這些字母加減熟練度。
  */
-import { LETTER_BY_CHAR, quizRoman, type Letter } from '../data/hangul'
+import { LETTER_BY_CHAR, letterSound, quizRoman, soundOfChar, type Letter } from '../data/hangul'
 import { SILENT_INITIAL } from '../data/groups'
-import { shuffle, weightedPick } from './mastery'
+import { weightedPick } from './mastery'
+import { buildOptions, type Question } from './question'
 import { compose, isInitial, isMedial, romanize } from './syllable'
 
 export type QuestionKind =
@@ -15,59 +16,15 @@ export type QuestionKind =
   | 'romanToSyllable'
   | 'syllableParts'
 
-export interface Option {
-  key: string
-  label: string
-  /** 用韓文字體排版 */
-  korean: boolean
-}
-
-export interface Question {
-  kind: QuestionKind
-  /** 題目指示，例如「這個字母怎麼念？」 */
-  title: string
-  /** 大字提示；listen 題沒有文字提示 */
-  prompt: string
-  promptKorean: boolean
-  /** 有值就顯示喇叭鈕 */
-  speakText?: string
-  /** listen 題出現時自動播放 */
-  autoSpeak: boolean
-  options: Option[]
-  answerKey: string
-  /** 這題影響哪些字母的熟練度 */
-  targets: string[]
-  explanation: string
-}
-
 export interface QuizContext {
   /** 已解鎖的字母 */
   pool: string[]
   /** 這一輪主攻的字母（通常是目前這組還沒精通的） */
   focus: string[]
   scores: Record<string, number>
-  canListen: boolean
 }
 
 const letterOf = (char: string): Letter => LETTER_BY_CHAR.get(char)!
-
-/** 湊出 n 個選項：正解 + 不重複的干擾項 */
-function buildOptions(
-  answer: string,
-  candidates: string[],
-  korean: boolean,
-  n = 4,
-): { options: Option[]; answerKey: string } {
-  const picked = [answer]
-  for (const c of shuffle(candidates)) {
-    if (picked.length >= n) break
-    if (!picked.includes(c)) picked.push(c)
-  }
-  return {
-    options: shuffle(picked).map((label) => ({ key: label, label, korean })),
-    answerKey: answer,
-  }
-}
 
 // ── 各種題型 ──────────────────────────────────────────────────
 
@@ -84,12 +41,12 @@ function letterToRoman(char: string, pool: string[]): Question {
     title: '這個字母怎麼念？',
     prompt: char,
     promptKorean: true,
-    speakText: letter.name,
+    speakText: letterSound(letter),
     autoSpeak: false,
     options,
     answerKey,
     targets: [char],
-    explanation: `${char}（${letter.name}）念 ${answer}。${letter.hint}`,
+    explanation: `${char}（名字叫 ${letter.name}）念 ${answer}，示範音是「${letterSound(letter)}」。${letter.hint}`,
   }
 }
 
@@ -110,28 +67,31 @@ function romanToLetter(char: string, pool: string[]): Question {
     options,
     answerKey,
     targets: [char],
-    explanation: `${asked} 是 ${char}（${letter.name}）。${letter.mnemonic}`,
+    explanation: `${asked} 是 ${char}（名字叫 ${letter.name}）。${letter.mnemonic}`,
   }
 }
 
 function listen(char: string, pool: string[]): Question {
   const letter = letterOf(char)
+  const sound = letterSound(letter)
+  // ㅇ 的示範音是 아，和母音 ㅏ 完全一樣。這種同音的字母不能同時出現在選項裡，
+  // 否則這題根本沒有唯一答案
   const { options, answerKey } = buildOptions(
     char,
-    pool.filter((c) => c !== char),
+    pool.filter((c) => c !== char && soundOfChar(c) !== sound),
     true,
   )
   return {
     kind: 'listen',
-    title: '聽聽看，是哪一個字母？',
+    title: '聽聽看，這是哪一個字母的音？',
     prompt: '🔊',
     promptKorean: false,
-    speakText: letter.name,
+    speakText: sound,
     autoSpeak: true,
     options,
     answerKey,
     targets: [char],
-    explanation: `是 ${char}（${letter.name}），念 ${quizRoman(char)}。`,
+    explanation: `是 ${char}，剛剛播的是「${letterSound(letter)}」，念 ${quizRoman(char)}。字母的名字叫 ${letter.name}。`,
   }
 }
 
@@ -249,7 +209,7 @@ function pickPartner(
 }
 
 function makeQuestion(ctx: QuizContext): Question {
-  const { pool, focus, scores, canListen } = ctx
+  const { pool, focus, scores } = ctx
   const target = weightedPick(focus.length > 0 ? focus : pool, scores)
 
   const initials = [
@@ -258,7 +218,8 @@ function makeQuestion(ctx: QuizContext): Question {
   const medials = pool.filter(isMedial)
 
   const kinds: QuestionKind[] = ['letterToRoman', 'romanToLetter']
-  if (canListen) kinds.push('listen')
+  // ㅇ 在字首不發音，放聽力題等於叫人聽一個不存在的音
+  if (target !== SILENT_INITIAL) kinds.push('listen')
 
   const canBuildSyllable =
     medials.length > 0 && (isMedial(target) ? initials.length > 0 : initials.includes(target))

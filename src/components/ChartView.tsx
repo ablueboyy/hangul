@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { LETTERS, LETTER_TYPE_LABEL, type Letter, type LetterType } from '../data/hangul'
+import { letterSound } from '../data/hangul'
 import { speak } from '../lib/speech'
 import { LEVEL_BAR, levelOf, ratio } from '../lib/mastery'
 import type { ProgressState } from '../hooks/useProgress'
@@ -44,7 +45,7 @@ export function ChartView({ state, isUnlocked }: Props) {
                   key={letter.char}
                   type="button"
                   onClick={() => {
-                    if (unlocked) speak(letter.name)
+                    if (unlocked) speak(letterSound(letter))
                     setSelected(letter)
                   }}
                   className={`relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-xl border active:scale-95 ${

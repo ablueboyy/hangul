@@ -3,8 +3,14 @@ export type LetterType = 'consonant' | 'tenseConsonant' | 'vowel' | 'compoundVow
 export interface Letter {
   /** 字母本身 */
   char: string
-  /** 韓國人念這個字母時說的名字（同時也是拿去給 TTS 唸的字串） */
+  /** 韓國人念這個字母時說的名字：ㄱ 叫「기역」、ㅅ 叫「시옷」 */
   name: string
+  /**
+   * 這個字母實際發出來的音，用一個代表音節示範。
+   * 子音單獨是念不出來的（ㄱ 的名字「기역」聽起來一點都不像 g），
+   * 所以用韓國人自己學字母的那套：가나다라마바사…，母音則本來就等於名字。
+   */
+  sound?: string
   /** 修正羅馬字 */
   roman: string
   type: LetterType
@@ -25,85 +31,85 @@ export const LETTER_TYPE_LABEL: Record<LetterType, string> = {
 export const LETTERS: Letter[] = [
   // ── 基本子音 14 ──────────────────────────────────────────────
   {
-    char: 'ㄱ', name: '기역', roman: 'g / k', type: 'consonant',
+    char: 'ㄱ', name: '기역', sound: '가', roman: 'g / k', type: 'consonant',
     hint: '介於注音 ㄍ 和 ㄎ 之間。在字首偏 k，在母音之間變成 g（가구 念 ga-gu）。',
     mnemonic: '舌根抬起抵住上顎後方的側面圖，像一把朝下的槍。',
     example: { word: '가방', roman: 'gabang', meaning: '包包' },
   },
   {
-    char: 'ㄴ', name: '니은', roman: 'n', type: 'consonant',
+    char: 'ㄴ', name: '니은', sound: '나', roman: 'n', type: 'consonant',
     hint: '就是注音 ㄋ。',
     mnemonic: '舌尖頂住上排牙齦的側面圖，像一個鉤子。',
     example: { word: '나무', roman: 'namu', meaning: '樹' },
   },
   {
-    char: 'ㄷ', name: '디귿', roman: 'd / t', type: 'consonant',
+    char: 'ㄷ', name: '디귿', sound: '다', roman: 'd / t', type: 'consonant',
     hint: '介於 ㄉ 和 ㄊ 之間。字首偏 t，夾在母音之間變 d。',
     mnemonic: 'ㄴ 上面加一橫 — 發音位置和 ㄴ 一樣，但氣流被完全擋住。',
     example: { word: '다리', roman: 'dari', meaning: '腿、橋' },
   },
   {
-    char: 'ㄹ', name: '리을', roman: 'r / l', type: 'consonant',
+    char: 'ㄹ', name: '리을', sound: '라', roman: 'r / l', type: 'consonant',
     hint: '字首、母音之間像輕彈的 r（西班牙語的 r）；在收音位置變成 l。',
     mnemonic: '舌頭捲起又彈開的路徑圖，筆畫連續轉彎。',
     example: { word: '라디오', roman: 'radio', meaning: '收音機' },
   },
   {
-    char: 'ㅁ', name: '미음', roman: 'm', type: 'consonant',
+    char: 'ㅁ', name: '미음', sound: '마', roman: 'm', type: 'consonant',
     hint: '就是注音 ㄇ。',
     mnemonic: '閉起來的嘴巴，就是漢字的「口」。',
     example: { word: '머리', roman: 'meori', meaning: '頭、頭髮' },
   },
   {
-    char: 'ㅂ', name: '비읍', roman: 'b / p', type: 'consonant',
+    char: 'ㅂ', name: '비읍', sound: '바', roman: 'b / p', type: 'consonant',
     hint: '介於 ㄅ 和 ㄆ 之間。字首偏 p，夾在母音之間變 b。',
     mnemonic: 'ㅁ 的上方打開 — 氣從緊閉的雙唇爆出來。',
     example: { word: '바다', roman: 'bada', meaning: '海' },
   },
   {
-    char: 'ㅅ', name: '시옷', roman: 's', type: 'consonant',
+    char: 'ㅅ', name: '시옷', sound: '사', roman: 's', type: 'consonant',
     hint: '注音 ㄙ。但後面接 ㅣ、ㅑ 這類音時會變成 ㄒ（시 念「西」）。',
     mnemonic: '牙齒的形狀，氣流從齒縫摩擦而出。',
     example: { word: '사람', roman: 'saram', meaning: '人' },
   },
   {
-    char: 'ㅇ', name: '이응', roman: '– / ng', type: 'consonant',
+    char: 'ㅇ', name: '이응', sound: '아', roman: '– / ng', type: 'consonant',
     hint: '放在音節開頭不發音，只是佔位子；放在收音位置才發鼻音 ng（像「工」的尾音）。',
     mnemonic: '喉嚨（聲門）的形狀，空心代表沒有阻礙。',
     example: { word: '아이', roman: 'ai', meaning: '小孩' },
   },
   {
-    char: 'ㅈ', name: '지읒', roman: 'j', type: 'consonant',
+    char: 'ㅈ', name: '지읒', sound: '자', roman: 'j', type: 'consonant',
     hint: '介於 ㄗ 和 ㄐ 之間，接 ㅣ 類母音時偏 ㄐ。',
     mnemonic: 'ㅅ 上面加一橫 — 摩擦音變成塞擦音。',
     example: { word: '자다', roman: 'jada', meaning: '睡覺' },
   },
   {
-    char: 'ㅊ', name: '치읓', roman: 'ch', type: 'consonant',
+    char: 'ㅊ', name: '치읓', sound: '차', roman: 'ch', type: 'consonant',
     hint: 'ㅈ 的送氣版，像 ㄘ / ㄑ，吐氣要明顯。',
     mnemonic: 'ㅈ 再加一畫 — 多出來的那一畫就是多出來的那口氣。',
     example: { word: '차', roman: 'cha', meaning: '車、茶' },
   },
   {
-    char: 'ㅋ', name: '키읔', roman: 'k', type: 'consonant',
+    char: 'ㅋ', name: '키읔', sound: '카', roman: 'k', type: 'consonant',
     hint: 'ㄱ 的送氣版，就是注音 ㄎ，紙片放嘴前應該會被吹動。',
     mnemonic: 'ㄱ 加一橫 = 加一口氣。',
     example: { word: '코', roman: 'ko', meaning: '鼻子' },
   },
   {
-    char: 'ㅌ', name: '티읕', roman: 't', type: 'consonant',
+    char: 'ㅌ', name: '티읕', sound: '타', roman: 't', type: 'consonant',
     hint: 'ㄷ 的送氣版，就是注音 ㄊ。',
     mnemonic: 'ㄷ 加一橫 = 加一口氣。',
     example: { word: '토끼', roman: 'tokki', meaning: '兔子' },
   },
   {
-    char: 'ㅍ', name: '피읖', roman: 'p', type: 'consonant',
+    char: 'ㅍ', name: '피읖', sound: '파', roman: 'p', type: 'consonant',
     hint: 'ㅂ 的送氣版，就是注音 ㄆ。',
     mnemonic: 'ㅂ 攤平打開 — 雙唇爆音再加一口氣。',
     example: { word: '포도', roman: 'podo', meaning: '葡萄' },
   },
   {
-    char: 'ㅎ', name: '히읗', roman: 'h', type: 'consonant',
+    char: 'ㅎ', name: '히읗', sound: '하', roman: 'h', type: 'consonant',
     hint: '注音 ㄏ，但比中文輕，夾在母音之間常常幾乎聽不見。',
     mnemonic: '喉嚨 ㅇ 戴上帽子 — 氣直接從喉嚨出來。',
     example: { word: '하늘', roman: 'haneul', meaning: '天空' },
@@ -111,31 +117,31 @@ export const LETTERS: Letter[] = [
 
   // ── 雙子音 5 ─────────────────────────────────────────────────
   {
-    char: 'ㄲ', name: '쌍기역', roman: 'kk', type: 'tenseConsonant',
+    char: 'ㄲ', name: '쌍기역', sound: '까', roman: 'kk', type: 'tenseConsonant',
     hint: '緊音：喉嚨繃緊、完全不送氣的 ㄍ。像憋住一口氣再彈出來。',
     mnemonic: '兩個 ㄱ 並排 = 加倍用力，但不是加倍吐氣。',
     example: { word: '꽃', roman: 'kkot', meaning: '花' },
   },
   {
-    char: 'ㄸ', name: '쌍디귿', roman: 'tt', type: 'tenseConsonant',
+    char: 'ㄸ', name: '쌍디귿', sound: '따', roman: 'tt', type: 'tenseConsonant',
     hint: '緊音版 ㄷ，喉嚨緊繃、不吐氣。',
     mnemonic: '兩個 ㄷ 並排。',
     example: { word: '딸기', roman: 'ttalgi', meaning: '草莓' },
   },
   {
-    char: 'ㅃ', name: '쌍비읍', roman: 'pp', type: 'tenseConsonant',
+    char: 'ㅃ', name: '쌍비읍', sound: '빠', roman: 'pp', type: 'tenseConsonant',
     hint: '緊音版 ㅂ，雙唇夾緊再彈開，完全不送氣。',
     mnemonic: '兩個 ㅂ 並排。',
     example: { word: '빵', roman: 'ppang', meaning: '麵包' },
   },
   {
-    char: 'ㅆ', name: '쌍시옷', roman: 'ss', type: 'tenseConsonant',
+    char: 'ㅆ', name: '쌍시옷', sound: '싸', roman: 'ss', type: 'tenseConsonant',
     hint: '緊音版 ㅅ，摩擦更強更短促。',
     mnemonic: '兩個 ㅅ 並排。',
     example: { word: '쌀', roman: 'ssal', meaning: '米' },
   },
   {
-    char: 'ㅉ', name: '쌍지읒', roman: 'jj', type: 'tenseConsonant',
+    char: 'ㅉ', name: '쌍지읒', sound: '짜', roman: 'jj', type: 'tenseConsonant',
     hint: '緊音版 ㅈ，喉嚨繃緊不吐氣。',
     mnemonic: '兩個 ㅈ 並排。',
     example: { word: '짜다', roman: 'jjada', meaning: '鹹的' },
@@ -273,6 +279,18 @@ export const LETTERS: Letter[] = [
 ]
 
 export const LETTER_BY_CHAR = new Map(LETTERS.map((l) => [l.char, l]))
+
+/**
+ * 這個字母「聽起來」是什麼 —— 要發聲時一律用這個，不要用 name。
+ * name 是字母的名字（ㅅ 叫 시옷），聽起來跟它的音 s 差很遠；
+ * 子音因此改用代表音節（ㅅ → 사），母音的名字本來就等於它的音。
+ */
+export const letterSound = (letter: Letter): string => letter.sound ?? letter.name
+
+export const soundOfChar = (char: string): string => {
+  const letter = LETTER_BY_CHAR.get(char)
+  return letter ? letterSound(letter) : char
+}
 
 /** 容易搞混、值得放在一起練的組合 */
 export const CONFUSABLE_GROUPS: string[][] = [

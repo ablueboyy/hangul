@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { GROUPS, type LetterGroup } from '../data/groups'
-import { LETTER_BY_CHAR } from '../data/hangul'
+import { LETTER_BY_CHAR, letterSound } from '../data/hangul'
 import { speak } from '../lib/speech'
 import {
   LEVEL_BADGE,
@@ -110,7 +110,7 @@ function CurrentGroup({
             <button
               key={char}
               type="button"
-              onClick={() => speak(letter.name)}
+              onClick={() => speak(letterSound(letter))}
               className="flex w-full items-center gap-3 rounded-xl bg-surface-2 p-2.5 text-left active:bg-surface-3"
             >
               <span className="font-kr w-8 text-center text-2xl text-ink">{char}</span>
@@ -231,18 +231,18 @@ function StudyScreen({
               <div className="flex items-center gap-4">
                 <button
                   type="button"
-                  onClick={() => speak(letter.name)}
+                  onClick={() => speak(letterSound(letter))}
                   className="font-kr flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-sunken text-5xl text-ink active:scale-95"
                   aria-label={`播放 ${char} 的發音`}
                 >
                   {char}
                 </button>
                 <div className="min-w-0">
-                  <div className="font-kr text-xl font-semibold text-ink">{letter.name}</div>
+                  <div className="font-kr text-xl font-semibold text-ink">{letterSound(letter)}</div>
                   <div className="text-base text-accent">{letter.roman}</div>
                   <button
                     type="button"
-                    onClick={() => speak(letter.name)}
+                    onClick={() => speak(letterSound(letter))}
                     className="mt-1 text-xs text-ink-3"
                   >
                     🔊 播放
@@ -251,6 +251,21 @@ function StudyScreen({
               </div>
               <p className="mt-3 text-sm leading-relaxed text-ink-2">{letter.hint}</p>
               <p className="mt-2 text-xs leading-relaxed text-ink-3">{letter.mnemonic}</p>
+              {letterSound(letter) !== letter.name && (
+                <p className="mt-2 text-xs leading-relaxed text-ink-4">
+                  子音單獨是發不出聲音的，所以用
+                  <span className="font-kr text-ink-3">「{letterSound(letter)}」</span>
+                  示範 —— 韓國人自己學字母也是這樣念 가나다라마바사。這個字母的名字叫
+                  <button
+                    type="button"
+                    onClick={() => speak(letter.name)}
+                    className="font-kr text-ink-3 underline decoration-dotted underline-offset-2"
+                  >
+                    {letter.name}
+                  </button>
+                  ，那是名字、不是它的音。
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => speak(letter.example.word)}

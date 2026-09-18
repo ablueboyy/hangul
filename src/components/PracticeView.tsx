@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { GROUPS, type LetterGroup } from '../data/groups'
-import { LETTER_BY_CHAR } from '../data/hangul'
-import { speak, warmUp } from '../lib/speech'
+import { LETTER_BY_CHAR, letterSound } from '../data/hangul'
+import { speak, unlock } from '../lib/speech'
+import { QuestionCard } from './QuestionCard'
 import { LEVEL_LABEL, isMastered, levelOf } from '../lib/mastery'
-import { generateSession, type Question } from '../lib/quiz'
+import { generateSession } from '../lib/quiz'
+import type { Question } from '../lib/question'
 import type { ProgressState } from '../hooks/useProgress'
 
 const SESSION_SIZE = 12
@@ -14,7 +16,6 @@ interface Props {
   state: ProgressState
   unlockedChars: string[]
   currentGroup: LetterGroup
-  canListen: boolean
   record: (targets: string[], correct: boolean) => void
   /**
    * 從「課程」按練習進來時直接開一輪。App 會換掉 key 讓這個元件重新掛載，
@@ -37,7 +38,6 @@ function buildSession(
   state: ProgressState,
   currentGroup: LetterGroup,
   unlockedChars: string[],
-  canListen: boolean,
 ): Session {
   const scopeChars = scope === 'group' ? currentGroup.chars : unlockedChars
   const notMastered = scopeChars.filter((c) => !isMastered(state.scores[c]))
@@ -48,7 +48,6 @@ function buildSession(
         pool: unlockedChars,
         focus: notMastered.length > 0 ? notMastered : scopeChars,
         scores: state.scores,
-        canListen,
       },
       SESSION_SIZE,
     ),
@@ -61,12 +60,11 @@ export function PracticeView({
   state,
   unlockedChars,
   currentGroup,
-  canListen,
   record,
   initialScope,
 }: Props) {
   const [session, setSession] = useState<Session | null>(() =>
-    initialScope ? buildSession(initialScope, state, currentGroup, unlockedChars, canListen) : null,
+    initialScope ? buildSession(initialScope, state, currentGroup, unlockedChars) : null,
   )
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -74,13 +72,13 @@ export function PracticeView({
 
   const start = useCallback(
     (scope: PracticeScope) => {
-      warmUp()
-      setSession(buildSession(scope, state, currentGroup, unlockedChars, canListen))
+      unlock()
+      setSession(buildSession(scope, state, currentGroup, unlockedChars))
       setIndex(0)
       setPicked(null)
       setCorrectCount(0)
     },
-    [state, currentGroup, unlockedChars, canListen],
+    [state, currentGroup, unlockedChars],
   )
 
   const question = session?.questions[index]
@@ -127,93 +125,18 @@ export function PracticeView({
   const q = question!
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 text-xs text-ink-3">
-        <span>
-          {index + 1} / {session.questions.length}
-        </span>
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
-          <div
-            className="h-full bg-accent transition-[width]"
-            style={{ width: `${(index / session.questions.length) * 100}%` }}
-          />
-        </div>
-        <button type="button" onClick={() => setSession(null)} className="text-ink-4">
-          結束
-        </button>
-      </div>
-
-      <p className="text-center text-sm text-ink-2">{q.title}</p>
-
-      <button
-        type="button"
-        disabled={!q.speakText}
-        onClick={() => q.speakText && speak(q.speakText)}
-        className="flex min-h-40 w-full flex-col items-center justify-center gap-2 rounded-3xl border border-line bg-surface py-6 disabled:active:bg-surface"
-      >
-        <span
-          className={`leading-none text-ink ${
-            q.promptKorean ? 'font-kr text-[5.5rem]' : 'text-5xl'
-          }`}
-        >
-          {q.prompt}
-        </span>
-        {q.speakText && <span className="text-xs text-ink-4">🔊 點一下再聽一次</span>}
-      </button>
-
-      <div className="grid grid-cols-2 gap-3">
-        {q.options.map((option) => {
-          const isAnswer = option.key === q.answerKey
-          const chosen = option.key === picked
-          const style = !picked
-            ? 'border-line bg-surface text-ink'
-            : isAnswer
-              ? 'border-ok bg-ok/25 text-ok-text'
-              : chosen
-                ? 'border-bad bg-bad/25 text-bad-text'
-                : 'border-line-soft bg-surface/60 text-ink-5'
-          return (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => choose(option.key)}
-              className={`rounded-xl border py-4 text-lg font-medium active:scale-[0.98] ${style} ${
-                option.korean ? 'font-kr text-2xl' : ''
-              }`}
-            >
-              {option.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {picked && (
-        <div className="animate-pop space-y-3">
-          <div
-            className={`rounded-xl p-3 text-sm leading-relaxed ${
-              picked === q.answerKey
-                ? 'bg-ok/15 text-ok-text'
-                : 'bg-bad/15 text-bad-text'
-            }`}
-          >
-            <span className="font-semibold">
-              {picked === q.answerKey ? '答對了 +1　' : '答錯了 −1　'}
-            </span>
-            <span className="font-kr">{q.explanation}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setIndex((i) => i + 1)
-              setPicked(null)
-            }}
-            className="w-full rounded-xl bg-accent-mid py-4 font-semibold text-oncolor active:bg-accent-deep"
-          >
-            {index + 1 >= session.questions.length ? '看結果' : '下一題'}
-          </button>
-        </div>
-      )}
-    </div>
+    <QuestionCard
+      question={q}
+      index={index}
+      total={session.questions.length}
+      picked={picked}
+      onPick={choose}
+      onNext={() => {
+        setIndex((i) => i + 1)
+        setPicked(null)
+      }}
+      onExit={() => setSession(null)}
+    />
   )
 }
 
@@ -321,7 +244,7 @@ function Summary({
               <button
                 key={char}
                 type="button"
-                onClick={() => speak(letter.name)}
+                onClick={() => speak(letterSound(letter))}
                 className="flex w-full items-center gap-3 rounded-xl bg-surface p-3 text-left active:bg-surface-3"
               >
                 <span className="font-kr w-9 text-center text-2xl text-ink">{char}</span>

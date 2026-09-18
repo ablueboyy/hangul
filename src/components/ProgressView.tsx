@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { GROUPS } from '../data/groups'
-import { LETTER_BY_CHAR } from '../data/hangul'
+import { LETTER_BY_CHAR, letterSound } from '../data/hangul'
 import { speak } from '../lib/speech'
 import { LEVEL_BADGE, LEVEL_LABEL, MAX_SCORE, SCORE_FAMILIAR, type Level } from '../lib/mastery'
 import type { ProgressState } from '../hooks/useProgress'
@@ -114,7 +114,7 @@ export function ProgressView({
                 <button
                   key={char}
                   type="button"
-                  onClick={() => speak(letter.name)}
+                  onClick={() => speak(letterSound(letter))}
                   className="flex w-full items-center gap-3 rounded-xl bg-surface p-3 text-left active:bg-surface-3"
                 >
                   <span className="font-kr w-9 text-center text-2xl text-ink">{char}</span>

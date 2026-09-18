@@ -1,19 +1,21 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { LessonsView } from './components/LessonsView'
 import { PracticeView, type PracticeScope } from './components/PracticeView'
 import { ChartView } from './components/ChartView'
+import { VocabView } from './components/VocabView'
 import { ProgressView } from './components/ProgressView'
 import { useProgress } from './hooks/useProgress'
 import { useTheme } from './hooks/useTheme'
 import { ThemeCycleButton } from './components/ThemeToggle'
-import { hasKoreanVoice, speechSupported, warmUp } from './lib/speech'
+import { unlock } from './lib/speech'
 
-type Tab = 'lessons' | 'practice' | 'chart' | 'progress'
+type Tab = 'lessons' | 'practice' | 'chart' | 'vocab' | 'progress'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'lessons', label: '課程', icon: '📚' },
   { id: 'practice', label: '練習', icon: '✏️' },
   { id: 'chart', label: '字母表', icon: '가' },
+  { id: 'vocab', label: '單字', icon: '📖' },
   { id: 'progress', label: '進度', icon: '📈' },
 ]
 
@@ -24,21 +26,9 @@ export default function App() {
     key: 0,
     scope: null,
   })
-  const { state, record, reset, restore, markBackedUp, unlockedChars, isUnlocked, currentGroup } =
+  const { state, record, recordVocab, reset, restore, markBackedUp, unlockedChars, isUnlocked, currentGroup } =
     useProgress()
   const { pref: themePref, setPref: setThemePref, cycle: cycleTheme } = useTheme()
-  const [canListen, setCanListen] = useState(true)
-  const [voiceWarning, setVoiceWarning] = useState(false)
-
-  useEffect(() => {
-    // 語音清單在部分瀏覽器是非同步載入的，等一下再判斷才準
-    const timer = setTimeout(() => {
-      const ok = speechSupported() && hasKoreanVoice()
-      setCanListen(ok)
-      setVoiceWarning(!ok)
-    }, 1200)
-    return () => clearTimeout(timer)
-  }, [])
 
   const goPractice = useCallback(() => {
     setTab('practice')
@@ -46,7 +36,7 @@ export default function App() {
   }, [])
 
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col" onPointerDown={warmUp}>
+    <div className="mx-auto flex min-h-full max-w-md flex-col" onPointerDown={unlock}>
       <header className="sticky top-0 z-20 border-b border-line-soft bg-page/90 px-4 pb-3 pt-safe backdrop-blur">
         <div className="flex items-baseline justify-between">
           <h1 className="text-lg font-semibold text-ink">
@@ -60,13 +50,6 @@ export default function App() {
           </div>
         </div>
       </header>
-
-      {voiceWarning && (
-        <div className="mx-4 mt-3 rounded-xl border border-warn/50 bg-warn/15 p-3 text-xs leading-relaxed text-warn-text">
-          這個瀏覽器找不到韓文語音，字母不會發聲，聽力題也會自動跳過。iPhone 請到「設定 → 輔助使用
-          → 朗讀內容 → 聲音」下載韓文語音；電腦上用 Chrome 或 Edge 通常內建。
-        </div>
-      )}
 
       <main className="flex-1 px-4 pb-28 pt-5">
         {tab === 'lessons' && (
@@ -83,12 +66,12 @@ export default function App() {
             state={state}
             unlockedChars={unlockedChars}
             currentGroup={currentGroup}
-            canListen={canListen}
             record={record}
             initialScope={practice.scope}
           />
         )}
         {tab === 'chart' && <ChartView state={state} isUnlocked={isUnlocked} />}
+        {tab === 'vocab' && <VocabView state={state} recordVocab={recordVocab} />}
         {tab === 'progress' && (
           <ProgressView
             state={state}
@@ -103,7 +86,7 @@ export default function App() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line-soft bg-page/95 px-2 pb-safe pt-2 backdrop-blur">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {TABS.map((t) => (
             <button
               key={t.id}
