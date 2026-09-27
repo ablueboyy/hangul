@@ -21,7 +21,8 @@ export default defineConfig({
       // 自己在 src/lib/pwa.ts 註冊，才能在切回 App 時主動檢查更新
       injectRegister: false,
       includeAssets: ['icon.svg'],
-      // 發音音檔也要進離線快取（452 個約 2MB），不然裝成 App 後沒網路就啞了
+      // 發音音檔也要進離線快取（含聽寫用的收音音節，約 3300 個、15MB），不然裝成 App 後沒網路就啞了。
+      // 只有第一次安裝會整包下載，之後更新只抓有變的檔
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,mp3}'],
       },

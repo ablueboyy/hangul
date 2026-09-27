@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TOTAL_WEEKS, VOCAB_WEEKS, WORD_BY_KO, wordsOfWeeks, type VocabWord } from '../data/vocab'
+import { VOCAB_WEEKS, WORD_BY_KO, wordsOfWeeks, type VocabWord } from '../data/vocab'
 import {
   LEVEL_BADGE,
   LEVEL_BAR,
@@ -14,25 +14,11 @@ import type { Question } from '../lib/question'
 import { speak, unlock } from '../lib/speech'
 import { QuestionCard } from './QuestionCard'
 import type { ProgressState } from '../hooks/useProgress'
-
-/** 勾選的週數存在自己的 key 裡 —— 它是介面偏好，不算學習進度，不進備份碼 */
-const WEEKS_KEY = 'hangul.vocab.weeks.v1'
+import { useVocabWeeks } from '../hooks/useVocabWeeks'
 
 interface Props {
   state: ProgressState
   recordVocab: (words: string[], correct: boolean) => void
-}
-
-function loadWeeks(): number[] {
-  try {
-    const raw = localStorage.getItem(WEEKS_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((w): w is number => typeof w === 'number' && w >= 1 && w <= TOTAL_WEEKS)
-  } catch {
-    return []
-  }
 }
 
 interface Session {
@@ -42,26 +28,13 @@ interface Session {
 }
 
 export function VocabView({ state, recordVocab }: Props) {
-  const [weeks, setWeeks] = useState<number[]>(loadWeeks)
+  const { weeks, setWeeks, toggle } = useVocabWeeks()
   const [session, setSession] = useState<Session | null>(null)
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [correctCount, setCorrectCount] = useState(0)
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(WEEKS_KEY, JSON.stringify(weeks))
-    } catch {
-      // 寫不進去就算了，大不了下次重勾一遍
-    }
-  }, [weeks])
-
   const words = useMemo(() => wordsOfWeeks(weeks), [weeks])
-
-  const toggle = (week: number) =>
-    setWeeks((prev) =>
-      prev.includes(week) ? prev.filter((w) => w !== week) : [...prev, week].sort((a, b) => a - b),
-    )
 
   const start = useCallback(() => {
     unlock()
@@ -96,7 +69,9 @@ export function VocabView({ state, recordVocab }: Props) {
   if (session && index >= session.questions.length) {
     return (
       <VocabSummary
-        session={session}
+        targets={session.questions.flatMap((q) => q.targets)}
+        before={session.before}
+        total={session.questions.length}
         state={state}
         correctCount={correctCount}
         onAgain={start}
@@ -125,7 +100,6 @@ export function VocabView({ state, recordVocab }: Props) {
 
   // ── 選週數 ──────────────────────────────────────────────────
   const mastered = words.filter((w) => isMastered(state.vocabScores[w.ko])).length
-  const available = VOCAB_WEEKS.filter((w) => w.words.length > 0).map((w) => w.week)
 
   return (
     <div className="space-y-5">
@@ -134,45 +108,7 @@ export function VocabView({ state, recordVocab }: Props) {
         和兩種聽力題。干擾選項只會從你勾選的範圍裡抽，所以你分辨的是真正會考的那幾個字。
       </p>
 
-      <section>
-        <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-ink-2">要測驗哪幾週</h2>
-          <div className="flex gap-3 text-xs">
-            <button type="button" onClick={() => setWeeks(available)} className="text-accent">
-              全選
-            </button>
-            <button type="button" onClick={() => setWeeks([])} className="text-ink-4">
-              清除
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2">
-          {VOCAB_WEEKS.map((w) => {
-            const empty = w.words.length === 0
-            const on = weeks.includes(w.week)
-            return (
-              <button
-                key={w.week}
-                type="button"
-                disabled={empty}
-                onClick={() => toggle(w.week)}
-                aria-pressed={on}
-                className={`flex flex-col items-center rounded-xl border py-2 text-[11px] active:scale-95 ${
-                  empty
-                    ? 'border-line-soft bg-sunken/70 text-ink-5'
-                    : on
-                      ? 'border-accent bg-accent/20 text-accent'
-                      : 'border-line bg-surface text-ink-2'
-                }`}
-              >
-                <span className="text-sm font-semibold">第 {w.week} 週</span>
-                <span>{empty ? '未建立' : w.words.length + ' 字'}</span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
+      <WeekPicker weeks={weeks} onToggle={toggle} onSet={setWeeks} />
 
       <div className="rounded-2xl border border-line bg-surface p-4">
         {words.length === 0 ? (
@@ -218,6 +154,60 @@ export function VocabView({ state, recordVocab }: Props) {
   )
 }
 
+/** 勾週數的格子，單字測驗和聽寫共用 */
+export function WeekPicker({
+  weeks,
+  onToggle,
+  onSet,
+}: {
+  weeks: number[]
+  onToggle: (week: number) => void
+  onSet: (weeks: number[]) => void
+}) {
+  const available = VOCAB_WEEKS.filter((w) => w.words.length > 0).map((w) => w.week)
+  return (
+  <section>
+    <div className="mb-2 flex items-baseline justify-between">
+      <h2 className="text-sm font-semibold text-ink-2">要測驗哪幾週</h2>
+      <div className="flex gap-3 text-xs">
+        <button type="button" onClick={() => onSet(available)} className="text-accent">
+          全選
+        </button>
+        <button type="button" onClick={() => onSet([])} className="text-ink-4">
+          清除
+        </button>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-4 gap-2">
+      {VOCAB_WEEKS.map((w) => {
+        const empty = w.words.length === 0
+        const on = weeks.includes(w.week)
+        return (
+          <button
+            key={w.week}
+            type="button"
+            disabled={empty}
+            onClick={() => onToggle(w.week)}
+            aria-pressed={on}
+            className={`flex flex-col items-center rounded-xl border py-2 text-[11px] active:scale-95 ${
+              empty
+                ? 'border-line-soft bg-sunken/70 text-ink-5'
+                : on
+                  ? 'border-accent bg-accent/20 text-accent'
+                  : 'border-line bg-surface text-ink-2'
+            }`}
+          >
+            <span className="text-sm font-semibold">第 {w.week} 週</span>
+            <span>{empty ? '未建立' : w.words.length + ' 字'}</span>
+          </button>
+        )
+      })}
+    </div>
+  </section>
+  )
+}
+
 function WordRow({ word, score }: { word: VocabWord; score: number }) {
   const level = levelOf(score, true)
   return (
@@ -245,24 +235,30 @@ function WordRow({ word, score }: { word: VocabWord; score: number }) {
   )
 }
 
-function VocabSummary({
-  session,
+/** 一輪結束的結算畫面，單字測驗和聽寫共用 */
+export function VocabSummary({
+  targets,
+  before,
+  total,
   state,
   correctCount,
   onAgain,
   onExit,
 }: {
-  session: Session
+  /** 這一輪考到的單字，重複的沒關係 */
+  targets: string[]
+  /** 開場時各單字的分數 */
+  before: Record<string, number>
+  total: number
   state: ProgressState
   correctCount: number
   onAgain: () => void
   onExit: () => void
 }) {
-  const total = session.questions.length
-  const touched = [...new Set(session.questions.flatMap((q) => q.targets))]
+  const touched = [...new Set(targets)]
     .map((ko) => ({
       ko,
-      before: session.before[ko] ?? 0,
+      before: before[ko] ?? 0,
       after: state.vocabScores[ko] ?? 0,
     }))
     .sort((a, b) => a.after - b.after)

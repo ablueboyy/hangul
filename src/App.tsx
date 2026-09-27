@@ -3,17 +3,19 @@ import { LessonsView } from './components/LessonsView'
 import { PracticeView, type PracticeScope } from './components/PracticeView'
 import { ChartView } from './components/ChartView'
 import { VocabView } from './components/VocabView'
+import { DictationView } from './components/DictationView'
 import { ProgressView } from './components/ProgressView'
 import { useProgress } from './hooks/useProgress'
 import { useTheme } from './hooks/useTheme'
 import { ThemeCycleButton } from './components/ThemeToggle'
 import { unlock } from './lib/speech'
 
-type Tab = 'lessons' | 'practice' | 'chart' | 'vocab' | 'progress'
+type Tab = 'lessons' | 'practice' | 'dictation' | 'chart' | 'vocab' | 'progress'
 
+// 字母練習不佔底部分頁，從「課程」的練習按鈕進去；那個位置讓給聽寫
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'lessons', label: '課程', icon: '📚' },
-  { id: 'practice', label: '練習', icon: '✏️' },
+  { id: 'dictation', label: '聽寫', icon: '✍️' },
   { id: 'chart', label: '字母表', icon: '가' },
   { id: 'vocab', label: '單字', icon: '📖' },
   { id: 'progress', label: '進度', icon: '📈' },
@@ -70,6 +72,14 @@ export default function App() {
             initialScope={practice.scope}
           />
         )}
+        {tab === 'dictation' && (
+          <DictationView
+            state={state}
+            unlockedChars={unlockedChars}
+            record={record}
+            recordVocab={recordVocab}
+          />
+        )}
         {tab === 'chart' && <ChartView state={state} isUnlocked={isUnlocked} />}
         {tab === 'vocab' && <VocabView state={state} recordVocab={recordVocab} />}
         {tab === 'progress' && (
@@ -87,26 +97,30 @@ export default function App() {
 
       <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line-soft bg-page/95 px-2 pb-safe pt-2 backdrop-blur">
         <div className="grid grid-cols-5">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 text-[11px] ${
-                tab === t.id ? 'text-accent' : 'text-ink-4'
-              }`}
-              aria-current={tab === t.id ? 'page' : undefined}
-            >
-              <span
-                className={
-                  t.id === 'chart' ? 'font-kr text-lg leading-none' : 'text-lg leading-none'
-                }
+          {TABS.map((t) => {
+            // 字母練習是從課程點進去的，所以在練習時亮「課程」
+            const active = tab === t.id || (tab === 'practice' && t.id === 'lessons')
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 text-[11px] ${
+                  active ? 'text-accent' : 'text-ink-4'
+                }`}
+                aria-current={active ? 'page' : undefined}
               >
-                {t.icon}
-              </span>
-              {t.label}
-            </button>
-          ))}
+                <span
+                  className={
+                    t.id === 'chart' ? 'font-kr text-lg leading-none' : 'text-lg leading-none'
+                  }
+                >
+                  {t.icon}
+                </span>
+                {t.label}
+              </button>
+            )
+          })}
         </div>
       </nav>
     </div>

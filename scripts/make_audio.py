@@ -39,11 +39,15 @@ TICKS_PER_SECOND = 10_000_000
 SYLLABLE_BASE = 0xAC00
 INITIALS = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"
 MEDIALS = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ"
+# 終聲順序（index 0 = 沒有收音）
+FINALS = " ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ"
+# 聽寫只考 7 個代表音：其他收音念起來都會變成這 7 個之一，光聽分不出來
+SOUND_FINALS = "ㄱㄴㄷㄹㅁㅂㅇ"
 
 
-def compose(initial: str, medial: str) -> str:
-    i, m = INITIALS.index(initial), MEDIALS.index(medial)
-    return chr(SYLLABLE_BASE + (i * 21 + m) * 28)
+def compose(initial: str, medial: str, final: str = " ") -> str:
+    i, m, f = INITIALS.index(initial), MEDIALS.index(medial), FINALS.index(final)
+    return chr(SYLLABLE_BASE + (i * 21 + m) * 28 + f)
 
 
 def clip_key(text: str) -> str:
@@ -65,8 +69,10 @@ def collect_texts() -> list[str]:
     print(f"字母 {len(names)} 個、例詞 {len(words)} 個、單字 {len(vocab)} 個")
 
     syllables = [compose(i, m) for i in INITIALS for m in MEDIALS]
+    # 聽寫的字母模式會出帶收音的音節（19 × 21 × 7 = 2793 個）
+    with_final = [compose(i, m, f) for i in INITIALS for m in MEDIALS for f in SOUND_FINALS]
     seen: dict[str, None] = {}
-    for t in [*syllables, *names, *sounds, *words, *vocab]:
+    for t in [*syllables, *names, *sounds, *words, *vocab, *with_final]:
         seen.setdefault(t, None)
     return list(seen)
 
