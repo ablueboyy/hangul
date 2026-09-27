@@ -9,11 +9,17 @@ const base = process.env.BASE_PATH ?? '/'
 
 export default defineConfig({
   base,
+  // 顯示在「進度」頁最底下，用來確認手機上的 App 已經更新到最新版
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // 自己在 src/lib/pwa.ts 註冊，才能在切回 App 時主動檢查更新
+      injectRegister: false,
       includeAssets: ['icon.svg'],
       // 發音音檔也要進離線快取（452 個約 2MB），不然裝成 App 後沒網路就啞了
       workbox: {

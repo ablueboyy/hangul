@@ -172,8 +172,17 @@ export function ProgressView({
           </button>
         )}
       </section>
+
+      <p className="text-center text-[10px] text-ink-4">版本 {formatBuildTime(__BUILD_TIME__)}</p>
     </div>
   )
+}
+
+/** 2026-09-27T08:05:00Z → 2026/9/27 16:05（用裝置的時區） */
+function formatBuildTime(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {

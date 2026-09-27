@@ -65,8 +65,37 @@ export const VOCAB_WEEKS: VocabWeek[] = [
       { ko: '유리', roman: 'yuri', meaning: '琉璃' },
     ],
   },
-  // 第 3～16 週：課上到了再把單字填進來
-  ...Array.from({ length: TOTAL_WEEKS - 2 }, (_, i) => ({ week: i + 3, words: [] })),
+  {
+    week: 3,
+    note: '加入 ㄱ ㄷ ㅂ ㅅ ㅈ，收音多了 ㄴ ㄹ（산、말、하늘）。',
+    words: [
+      { ko: '다리', roman: 'dari', meaning: '腿' },
+      { ko: '두부', roman: 'dubu', meaning: '豆腐' },
+      { ko: '바다', roman: 'bada', meaning: '大海' },
+      { ko: '자기', roman: 'jagi', meaning: '自己' },
+      { ko: '기자', roman: 'gija', meaning: '記者' },
+      { ko: '아기', roman: 'agi', meaning: '嬰兒' },
+      { ko: '가구', roman: 'gagu', meaning: '家具' },
+      { ko: '모자', roman: 'moja', meaning: '帽子' },
+      { ko: '사자', roman: 'saja', meaning: '獅子' },
+      { ko: '바지', roman: 'baji', meaning: '褲子' },
+      { ko: '아버지', roman: 'abeoji', meaning: '父親' },
+      { ko: '나비', roman: 'nabi', meaning: '蝴蝶' },
+      { ko: '자음', roman: 'jaeum', meaning: '子音' },
+      { ko: '모음', roman: 'moeum', meaning: '母音' },
+      { ko: '술', roman: 'sul', meaning: '酒' },
+      { ko: '산', roman: 'san', meaning: '山' },
+      { ko: '말', roman: 'mal', meaning: '馬' },
+      { ko: '물', roman: 'mul', meaning: '水' },
+      { ko: '하늘', roman: 'haneul', meaning: '天空' },
+      { ko: '구름', roman: 'gureum', meaning: '雲' },
+      // 意思不能和第 2 週的 엄마（媽媽）一樣，不然「看意思選字」會出現兩個看起來都對的選項
+      { ko: '어머니', roman: 'eomeoni', meaning: '母親（媽媽）' },
+      { ko: '곰', roman: 'gom', meaning: '熊' },
+    ],
+  },
+  // 第 4～16 週：課上到了再把單字填進來
+  ...Array.from({ length: TOTAL_WEEKS - 3 }, (_, i) => ({ week: i + 4, words: [] })),
 ]
 
 export const WEEK_BY_NUMBER = new Map(VOCAB_WEEKS.map((w) => [w.week, w]))
