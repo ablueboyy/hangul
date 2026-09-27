@@ -56,7 +56,8 @@ def clip_key(text: str) -> str:
 
 
 # ── 要產哪些音 ────────────────────────────────────────────────────────
-def collect_texts() -> list[str]:
+def collect_texts() -> list[tuple[str, str]]:
+    """回傳 (要念的字, 相對於 public/audio 的路徑，不含副檔名)。"""
     src = HANGUL_TS.read_text(encoding="utf-8")
     names = re.findall(r"name: '([^']+)'", src)
     words = re.findall(r"word: '([^']+)'", src)
@@ -71,10 +72,14 @@ def collect_texts() -> list[str]:
     syllables = [compose(i, m) for i in INITIALS for m in MEDIALS]
     # 聽寫的字母模式會出帶收音的音節（19 × 21 × 7 = 2793 個）
     with_final = [compose(i, m, f) for i in INITIALS for m in MEDIALS for f in SOUND_FINALS]
-    seen: dict[str, None] = {}
-    for t in [*syllables, *names, *sounds, *words, *vocab, *with_final]:
-        seen.setdefault(t, None)
-    return list(seen)
+    seen: dict[str, str] = {}
+    for t in [*syllables, *names, *sounds, *words, *vocab]:
+        seen.setdefault(t, clip_key(t))
+    # 收音音節另外放 final/：它們不進安裝包（太大，iOS 會更新不完），
+    # 由 App 在背景慢慢下載快取，見 src/lib/pwa.ts
+    for t in with_final:
+        seen.setdefault(t, f"final/{clip_key(t)}")
+    return list(seen.items())
 
 
 # ── mp3 幀裁切 ────────────────────────────────────────────────────────
@@ -147,8 +152,10 @@ async def synth(text: str, voice: str, rate: str) -> bytes:
     return trim(bytes(audio), first, last) if first is not None else bytes(audio)
 
 
-async def one(text: str, voice: str, rate: str, force: bool, sem: asyncio.Semaphore) -> tuple[str, int]:
-    path = OUT_DIR / f"{clip_key(text)}.mp3"
+async def one(
+    text: str, rel: str, voice: str, rate: str, force: bool, sem: asyncio.Semaphore
+) -> tuple[str, int]:
+    path = OUT_DIR / f"{rel}.mp3"
     if path.exists() and not force:
         return text, 0
     async with sem:
@@ -172,24 +179,26 @@ async def main() -> None:
     ap.add_argument("--limit", type=int, default=0, help="只產前 N 個，用來試跑")
     args = ap.parse_args()
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "final").mkdir(parents=True, exist_ok=True)
     texts = collect_texts()
     if args.limit:
         texts = texts[: args.limit]
 
     sem = asyncio.Semaphore(args.jobs)
     done = 0
-    tasks = [asyncio.create_task(one(t, args.voice, args.rate, args.force, sem)) for t in texts]
+    tasks = [
+        asyncio.create_task(one(t, rel, args.voice, args.rate, args.force, sem)) for t, rel in texts
+    ]
     for fut in asyncio.as_completed(tasks):
         _, size = await fut
         done += 1
         if done % 25 == 0 or done == len(texts):
             print(f"  {done}/{len(texts)}", flush=True)
 
-    total = sum(f.stat().st_size for f in OUT_DIR.glob("*.mp3"))
+    total = sum(f.stat().st_size for f in OUT_DIR.rglob("*.mp3"))
     MANIFEST.write_text(
         json.dumps(
-            {"voice": args.voice, "rate": args.rate, "keys": sorted(clip_key(t) for t in texts)},
+            {"voice": args.voice, "rate": args.rate, "keys": sorted(rel for _, rel in texts)},
             ensure_ascii=False,
             indent=2,
         )

@@ -16,7 +16,8 @@
 
 import manifest from '../data/audio-manifest.json'
 
-const CLIPS = new Set<string>(manifest.keys)
+/** 檔名 → 相對路徑。聽寫用的收音音節放在 final/ 底下，其他都在 audio/ 根目錄 */
+const CLIPS = new Map<string, string>(manifest.keys.map((rel) => [rel.split('/').pop()!, rel]))
 
 /** 檔名 = 每個字的碼位十六進位，用 - 接起來（和 make_audio.py 同一套規則） */
 const clipKey = (text: string): string =>
@@ -24,7 +25,11 @@ const clipKey = (text: string): string =>
     .map((c) => c.codePointAt(0)!.toString(16))
     .join('-')
 
-const clipUrl = (text: string): string => `${import.meta.env.BASE_URL}audio/${clipKey(text)}.mp3`
+const audioUrl = (rel: string): string => `${import.meta.env.BASE_URL}audio/${rel}.mp3`
+
+/** 不在安裝包裡、要另外在背景下載的音檔網址（給 pwa.ts 預先快取用） */
+export const backgroundClipUrls = (): string[] =>
+  manifest.keys.filter((rel) => rel.startsWith('final/')).map(audioUrl)
 
 /** 一小段無聲的 wav，只拿來在使用者手勢裡解鎖 iOS 的音訊 */
 const SILENT_WAV =
@@ -70,11 +75,12 @@ export function speak(text: string, options: SpeakOptions = {}): void {
 
   const mine = ++token
 
-  if (CLIPS.has(clipKey(text))) {
+  const clip = CLIPS.get(clipKey(text))
+  if (clip) {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
     const el = element()
     el.pause()
-    el.src = clipUrl(text)
+    el.src = audioUrl(clip)
     el.playbackRate = options.rate ?? 1
     void el.play().catch((err: unknown) => {
       // 連點時前一個播放會被中斷而 reject，那是正常的，不要退回語音合成再念一次
