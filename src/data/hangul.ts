@@ -292,14 +292,14 @@ export const soundOfChar = (char: string): string => {
   return letter ? letterSound(letter) : char
 }
 
-/** 容易搞混、值得放在一起練的組合 */
+/** 容易搞混、值得放在一起練的組合（字母表的「對比聽」拿來當預設組合） */
 export const CONFUSABLE_GROUPS: string[][] = [
   ['ㄱ', 'ㅋ', 'ㄲ'],
   ['ㄷ', 'ㅌ', 'ㄸ'],
   ['ㅂ', 'ㅍ', 'ㅃ'],
   ['ㅈ', 'ㅊ', 'ㅉ'],
   ['ㅅ', 'ㅆ'],
-  ['ㅓ', 'ㅗ'],
+  ['ㅓ', 'ㅗ', 'ㅜ'],
   ['ㅡ', 'ㅜ'],
   ['ㅐ', 'ㅔ'],
   ['ㅘ', 'ㅙ', 'ㅚ', 'ㅝ', 'ㅞ'],

@@ -79,6 +79,7 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   if (clip) {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
     const el = element()
+    el.onended = null
     el.pause()
     el.src = audioUrl(clip)
     el.playbackRate = options.rate ?? 1
@@ -92,6 +93,77 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   }
 
   speakWithSynthesis(text, options)
+}
+
+export interface SequenceOptions {
+  /** 兩個音之間停多久（毫秒） */
+  gap?: number
+  /** 播完一輪後從頭再來，直到被 stopSpeaking() 或下一次 speak() 打斷 */
+  loop?: boolean
+  /** 開始播第 i 個時呼叫；整串播完（沒有 loop）時傳 -1 */
+  onStep?: (index: number) => void
+}
+
+/**
+ * 一個接一個念，拿來對比聽起來很像的音（어 → 오 → 우）。
+ * 每個音要等上一個真的播完才接下一個，不然短音檔會互相截斷。
+ * 任何新的 speak() / speakSequence() / stopSpeaking() 都會讓這一串自動停下來。
+ */
+export function speakSequence(texts: string[], options: SequenceOptions = {}): void {
+  if (texts.length === 0 || typeof window === 'undefined') return
+  unlock()
+
+  const { gap = 700, loop = false, onStep } = options
+  const mine = ++token
+  const el = element()
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+
+  const step = (i: number) => {
+    if (mine !== token) return
+    if (i >= texts.length) {
+      if (!loop) {
+        onStep?.(-1)
+        return
+      }
+      i = 0
+    }
+    onStep?.(i)
+    const next = () => {
+      if (mine === token) window.setTimeout(() => step(i + 1), gap)
+    }
+
+    const clip = CLIPS.get(clipKey(texts[i]))
+    if (!clip) {
+      // 沒有音檔的就用語音合成念，估個時間當作它念完了
+      speakWithSynthesis(texts[i], {})
+      window.setTimeout(next, 900)
+      return
+    }
+    el.pause()
+    el.src = audioUrl(clip)
+    el.playbackRate = 1
+    el.onended = () => {
+      el.onended = null
+      next()
+    }
+    void el.play().catch(() => {
+      if (mine !== token) return
+      el.onended = null
+      next()
+    })
+  }
+
+  step(0)
+}
+
+/** 停掉目前在播的東西（包括 speakSequence 的整串） */
+export function stopSpeaking(): void {
+  ++token
+  if (audio) {
+    audio.onended = null
+    audio.pause()
+  }
+  if (synthesisSupported()) window.speechSynthesis.cancel()
 }
 
 // ── 後備：瀏覽器語音合成 ──────────────────────────────────────────────
