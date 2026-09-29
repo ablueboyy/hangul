@@ -94,8 +94,39 @@ export const VOCAB_WEEKS: VocabWeek[] = [
       { ko: '곰', roman: 'gom', meaning: '熊' },
     ],
   },
-  // 第 4～16 週：課上到了再把單字填進來
-  ...Array.from({ length: TOTAL_WEEKS - 3 }, (_, i) => ({ week: i + 4, words: [] })),
+  {
+    week: 4,
+    note: '加入 ㅊ、雙子音 ㄸ 和複合母音 ㅘ，收音多了 ㅇ（강、한강）。',
+    // 課本這週還有 아기（嬰兒），但第 3 週已經有了，ko 不能重複所以沒放
+    words: [
+      { ko: '허리', roman: 'heori', meaning: '腰' },
+      { ko: '하나', roman: 'hana', meaning: '一' },
+      { ko: '가자', roman: 'gaja', meaning: '走吧' },
+      { ko: '여기요', roman: 'yeogiyo', meaning: '來一下' },
+      { ko: '저기요', roman: 'jeogiyo', meaning: '不好意思' },
+      { ko: '여기', roman: 'yeogi', meaning: '這裡' },
+      { ko: '거기', roman: 'geogi', meaning: '那裡' },
+      { ko: '저기', roman: 'jeogi', meaning: '更遠的那裡' },
+      { ko: '야구', roman: 'yagu', meaning: '野球' },
+      { ko: '고기', roman: 'gogi', meaning: '肉' },
+      { ko: '다', roman: 'da', meaning: '都' },
+      { ko: '어디', roman: 'eodi', meaning: '哪裡' },
+      { ko: '가다', roman: 'gada', meaning: '去' },
+      { ko: '오다', roman: 'oda', meaning: '來' },
+      { ko: '바나나', roman: 'banana', meaning: '香蕉' },
+      { ko: '구아바', roman: 'guaba', meaning: '芭樂' },
+      { ko: '자두', roman: 'jadu', meaning: '李子' },
+      { ko: '유자', roman: 'yuja', meaning: '柚子' },
+      { ko: '차', roman: 'cha', meaning: '茶' },
+      { ko: '귤', roman: 'gyul', meaning: '橘子' },
+      { ko: '딸기', roman: 'ttalgi', meaning: '草莓' },
+      { ko: '과일', roman: 'gwail', meaning: '水果' },
+      { ko: '강', roman: 'gang', meaning: '江' },
+      { ko: '한강', roman: 'hangang', meaning: '漢江' },
+    ],
+  },
+  // 第 5～16 週：課上到了再把單字填進來
+  ...Array.from({ length: TOTAL_WEEKS - 4 }, (_, i) => ({ week: i + 5, words: [] })),
 ]
 
 export const WEEK_BY_NUMBER = new Map(VOCAB_WEEKS.map((w) => [w.week, w]))
