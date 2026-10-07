@@ -1,18 +1,16 @@
 import { useEffect } from 'react'
 import type { Letter } from '../data/hangul'
 import { LETTER_TYPE_LABEL, letterSound } from '../data/hangul'
-import { GROUP_OF_CHAR } from '../data/groups'
 import { speak } from '../lib/speech'
 import { LEVEL_BADGE, LEVEL_BAR, LEVEL_LABEL, MAX_SCORE, levelOf, ratio } from '../lib/mastery'
 
 interface Props {
   letter: Letter
   score: number
-  unlocked: boolean
   onClose: () => void
 }
 
-export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
+export function LetterSheet({ letter, score, onClose }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -21,7 +19,7 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const level = levelOf(score, unlocked)
+  const level = levelOf(score)
   const sound = letterSound(letter)
   // 子音的名字和它的音不一樣（ㅅ 叫 시옷，但音是 s），兩者要分開呈現
   const nameDiffers = sound !== letter.name
@@ -40,29 +38,20 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
         <div className="flex items-center gap-4">
           <button
             type="button"
-            disabled={!unlocked}
             onClick={() => speak(sound)}
-            className={`font-kr flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-6xl ${
-              unlocked ? 'text-ink active:scale-95' : 'text-ink-5'
-            }`}
+            className="font-kr flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-6xl text-ink active:scale-95"
             aria-label={`播放 ${letter.char} 的發音`}
           >
             {letter.char}
           </button>
           <div className="min-w-0">
             <div className="text-xs text-ink-3">{LETTER_TYPE_LABEL[letter.type]}</div>
-            {unlocked ? (
-              <>
-                <div className="font-kr text-2xl font-semibold text-ink">{sound}</div>
-                <div className="text-lg text-accent">{letter.roman}</div>
-                {nameDiffers && (
-                  <div className="text-xs text-ink-4">
-                    字母名字：<span className="font-kr">{letter.name}</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-lg font-semibold text-ink-4">還沒解鎖</div>
+            <div className="font-kr text-2xl font-semibold text-ink">{sound}</div>
+            <div className="text-lg text-accent">{letter.roman}</div>
+            {nameDiffers && (
+              <div className="text-xs text-ink-4">
+                字母名字：<span className="font-kr">{letter.name}</span>
+              </div>
             )}
             <span className={`mt-1 inline-block rounded px-2 py-0.5 text-xs ${LEVEL_BADGE[level]}`}>
               {LEVEL_LABEL[level]}
@@ -70,13 +59,7 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
           </div>
         </div>
 
-        {!unlocked ? (
-          <p className="mt-5 rounded-xl bg-surface-2 p-4 text-sm leading-relaxed text-ink-2">
-            這個字母在<span className="font-semibold text-accent">第 {GROUP_OF_CHAR.get(letter.char)} 組</span>
-            。把目前這一組的 5 個字母都練到精通，就會解鎖下一組。
-          </p>
-        ) : (
-          <>
+        <>
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
@@ -141,8 +124,7 @@ export function LetterSheet({ letter, score, unlocked, onClose }: Props) {
                 />
               </div>
             </div>
-          </>
-        )}
+        </>
 
         <button
           type="button"

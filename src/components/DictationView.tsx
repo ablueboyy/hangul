@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { wordsOfWeeks, type VocabWord } from '../data/vocab'
 import { LETTERS, LETTER_TYPE_LABEL, type LetterType } from '../data/hangul'
+import { ALL_CHARS } from '../data/groups'
 import { isMastered, weightedPick } from '../lib/mastery'
 import { sessionSize } from '../lib/vocabQuiz'
 import { generateSyllables } from '../lib/dictation'
@@ -16,14 +17,17 @@ type Mode = 'word' | 'letter'
 /** 字母模式一輪的題數 */
 const LETTER_SESSION_SIZE = 12
 
+/** 沒選過收音時預設 7 個代表音全開 */
+const ALL_FINALS: string[] = [...SOUND_FINALS]
+
 /** 聽寫自己的介面偏好（模式、勾了哪些字母和收音），一樣不進備份碼 */
 const PREFS_KEY = 'hangul.dictation.v2'
 
 interface Prefs {
   mode: Mode
-  /** null = 還沒自己勾過，預設用已解鎖的字母 */
+  /** null = 還沒自己勾過，預設 40 個字母全勾 */
   letters: string[] | null
-  /** 同上，null = 預設用已解鎖的那幾個代表音 */
+  /** 同上，null = 預設 7 個代表音全勾 */
   finals: string[] | null
 }
 
@@ -50,7 +54,6 @@ function loadPrefs(): Prefs {
 
 interface Props {
   state: ProgressState
-  unlockedChars: string[]
   record: (targets: string[], correct: boolean) => void
   recordVocab: (words: string[], correct: boolean) => void
 }
@@ -94,7 +97,7 @@ function pickWords(words: VocabWord[], scores: Record<string, number>, count: nu
  * 單字模式的分數和「單字」分頁記在一起；字母模式則算進字母的熟練度 ——
  * 會寫當然也算會。
  */
-export function DictationView({ state, unlockedChars, record, recordVocab }: Props) {
+export function DictationView({ state, record, recordVocab }: Props) {
   const { weeks, setWeeks, toggle: toggleWeek } = useVocabWeeks()
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs)
   const [session, setSession] = useState<Session | null>(null)
@@ -111,17 +114,17 @@ export function DictationView({ state, unlockedChars, record, recordVocab }: Pro
   }, [prefs])
 
   const words = useMemo(() => wordsOfWeeks(weeks), [weeks])
-  const letters = prefs.letters ?? unlockedChars
+  const letters = prefs.letters ?? ALL_CHARS
   const setLetters = (next: string[]) => setPrefs((p) => ({ ...p, letters: next }))
-  const finals = prefs.finals ?? SOUND_FINALS.filter((f) => unlockedChars.includes(f))
+  const finals = prefs.finals ?? ALL_FINALS
   const setFinals = (next: string[]) => setPrefs((p) => ({ ...p, finals: next }))
   // 用 functional update，連點好幾個字母時才不會互相蓋掉
   const toggleLetter = (char: string) =>
-    setPrefs((p) => ({ ...p, letters: toggled(p.letters ?? unlockedChars, char) }))
+    setPrefs((p) => ({ ...p, letters: toggled(p.letters ?? ALL_CHARS, char) }))
   const toggleFinal = (char: string) =>
     setPrefs((p) => ({
       ...p,
-      finals: toggled(p.finals ?? SOUND_FINALS.filter((f) => unlockedChars.includes(f)), char),
+      finals: toggled(p.finals ?? ALL_FINALS, char),
     }))
 
   const start = useCallback(() => {
@@ -161,8 +164,7 @@ export function DictationView({ state, unlockedChars, record, recordVocab }: Pro
   const grade = (correct: boolean) => {
     if (!session || !item) return
     if (session.mode === 'word') recordVocab(item.targets, correct)
-    // 還沒解鎖的字母可以拿來練，但不計分，免得打亂闖關的順序
-    else record(item.targets.filter((c) => unlockedChars.includes(c)), correct)
+    else record(item.targets, correct)
     setResults((r) => [...r, correct])
     setIndex((i) => i + 1)
     setRevealed(false)
@@ -314,7 +316,6 @@ export function DictationView({ state, unlockedChars, record, recordVocab }: Pro
       ) : (
         <LetterSetup
           letters={letters}
-          unlockedChars={unlockedChars}
           finals={finals}
           onSet={setLetters}
           onToggle={toggleLetter}
@@ -391,12 +392,10 @@ const TYPE_ORDER: LetterType[] = ['consonant', 'tenseConsonant', 'vowel', 'compo
 function LetterButton({
   char,
   on,
-  locked,
   onClick,
 }: {
   char: string
   on: boolean
-  locked: boolean
   onClick: () => void
 }) {
   return (
@@ -409,14 +408,12 @@ function LetterButton({
       }`}
     >
       {char}
-      {locked && <span className="absolute right-0.5 top-0 text-[8px]">🔒</span>}
     </button>
   )
 }
 
 function LetterSetup({
   letters,
-  unlockedChars,
   finals,
   onSet,
   onToggle,
@@ -425,7 +422,6 @@ function LetterSetup({
   onStart,
 }: {
   letters: string[]
-  unlockedChars: string[]
   finals: string[]
   onSet: (letters: string[]) => void
   onToggle: (char: string) => void
@@ -439,16 +435,13 @@ function LetterSetup({
     <>
       <p className="text-xs leading-relaxed text-ink-3">
         勾幾個字母，會用它們拼出音節念給你聽：子音當開頭、母音在中間，收音在下面另外勾。
-        只勾母音的話，開頭會用不發音的 ㅇ。還沒解鎖的字母也能選來練，只是不計分。
+        只勾母音的話，開頭會用不發音的 ㅇ。
       </p>
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-ink-2">要考哪些字母</h2>
           <div className="flex gap-3 text-xs">
-            <button type="button" onClick={() => onSet(unlockedChars)} className="text-accent">
-              已解鎖
-            </button>
             <button type="button" onClick={() => onSet(LETTERS.map((l) => l.char))} className="text-accent">
               全選
             </button>
@@ -468,7 +461,6 @@ function LetterSetup({
                     key={l.char}
                     char={l.char}
                     on={letters.includes(l.char)}
-                    locked={!unlockedChars.includes(l.char)}
                     onClick={() => onToggle(l.char)}
                   />
                 )
@@ -496,7 +488,6 @@ function LetterSetup({
               key={f}
               char={f}
               on={finals.includes(f)}
-              locked={!unlockedChars.includes(f)}
               onClick={() => onToggleFinal(f)}
             />
           ))}

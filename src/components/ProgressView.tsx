@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { GROUPS } from '../data/groups'
+import { ALL_CHARS } from '../data/groups'
 import { LETTER_BY_CHAR, letterSound } from '../data/hangul'
 import { speak } from '../lib/speech'
 import { LEVEL_BADGE, LEVEL_LABEL, MAX_SCORE, SCORE_FAMILIAR, type Level } from '../lib/mastery'
@@ -10,7 +10,6 @@ import type { ThemePref } from '../hooks/useTheme'
 
 interface Props {
   state: ProgressState
-  unlockedChars: string[]
   onReset: () => void
   onRestore: (next: ProgressState) => void
   onBackedUp: () => void
@@ -18,20 +17,18 @@ interface Props {
   onThemeChange: (next: ThemePref) => void
 }
 
-const TOTAL_LETTERS = GROUPS.reduce((n, g) => n + g.chars.length, 0)
+const TOTAL_LETTERS = ALL_CHARS.length
 
 const LEVEL_FILL: Record<Level, string> = {
   mastered: 'bg-ok',
   familiar: 'bg-accent',
   novice: 'bg-ink-4',
-  locked: 'bg-surface-2',
 }
 
-const LEVEL_ORDER: Level[] = ['mastered', 'familiar', 'novice', 'locked']
+const LEVEL_ORDER: Level[] = ['mastered', 'familiar', 'novice']
 
 export function ProgressView({
   state,
-  unlockedChars,
   onReset,
   onRestore,
   onBackedUp,
@@ -41,31 +38,25 @@ export function ProgressView({
   const [confirming, setConfirming] = useState(false)
 
   const buckets = useMemo(() => {
-    const counts: Record<Level, number> = { locked: 0, novice: 0, familiar: 0, mastered: 0 }
-    for (const group of GROUPS) {
-      for (const char of group.chars) {
-        if (!unlockedChars.includes(char)) {
-          counts.locked++
-          continue
-        }
-        const score = state.scores[char] ?? 0
-        if (score >= MAX_SCORE) counts.mastered++
-        else if (score >= SCORE_FAMILIAR) counts.familiar++
-        else counts.novice++
-      }
+    const counts: Record<Level, number> = { novice: 0, familiar: 0, mastered: 0 }
+    for (const char of ALL_CHARS) {
+      const score = state.scores[char] ?? 0
+      if (score >= MAX_SCORE) counts.mastered++
+      else if (score >= SCORE_FAMILIAR) counts.familiar++
+      else counts.novice++
     }
     return counts
-  }, [state.scores, unlockedChars])
+  }, [state.scores])
 
-  // 已解鎖但還沒精通的，就是現在最該補的
+  // 練過但還沒精通的，就是現在最該補的；完全沒碰過的不算，免得一開始整排都是沒練的字母
   const weakest = useMemo(
     () =>
-      unlockedChars
+      ALL_CHARS.filter((char) => char in state.scores)
         .map((char) => ({ char, score: state.scores[char] ?? 0 }))
         .filter((x) => x.score < MAX_SCORE)
         .sort((a, b) => a.score - b.score)
         .slice(0, 8),
-    [state.scores, unlockedChars],
+    [state.scores],
   )
 
   const accuracy =
@@ -104,7 +95,7 @@ export function ProgressView({
       <section>
         <h2 className="mb-3 text-sm font-semibold text-ink-2">現在最該補的字母</h2>
         {weakest.length === 0 ? (
-          <p className="text-sm text-ink-4">已解鎖的字母全部精通了，去「課程」開下一組吧。</p>
+          <p className="text-sm text-ink-4">練過的字母都精通了，去「課程」多勾幾組吧。</p>
         ) : (
           <div className="space-y-2">
             {weakest.map(({ char, score }) => {
@@ -168,7 +159,7 @@ export function ProgressView({
             onClick={() => setConfirming(true)}
             className="w-full rounded-xl bg-surface-2 py-3 text-sm text-ink-3 active:bg-surface-3"
           >
-            清除所有學習紀錄，從第 1 組重來
+            清除所有學習紀錄
           </button>
         )}
       </section>

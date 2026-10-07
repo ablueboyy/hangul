@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { LessonsView } from './components/LessonsView'
 import { PracticeView, type PracticeScope } from './components/PracticeView'
 import { ChartView } from './components/ChartView'
@@ -6,6 +6,8 @@ import { VocabView } from './components/VocabView'
 import { DictationView } from './components/DictationView'
 import { ProgressView } from './components/ProgressView'
 import { useProgress } from './hooks/useProgress'
+import { useLetterGroups } from './hooks/useLetterGroups'
+import { charsOfGroups } from './data/groups'
 import { useTheme } from './hooks/useTheme'
 import { ThemeCycleButton } from './components/ThemeToggle'
 import { unlock } from './lib/speech'
@@ -28,13 +30,16 @@ export default function App() {
     key: 0,
     scope: null,
   })
-  const { state, record, recordVocab, reset, restore, markBackedUp, unlockedChars, isUnlocked, currentGroup } =
-    useProgress()
+  const { state, record, recordVocab, reset, restore, markBackedUp } = useProgress()
+  const letterGroups = useLetterGroups(
+    Array.from({ length: state.unlockedCount }, (_, i) => i + 1),
+  )
+  const pickedChars = useMemo(() => charsOfGroups(letterGroups.groups), [letterGroups.groups])
   const { pref: themePref, setPref: setThemePref, cycle: cycleTheme } = useTheme()
 
   const goPractice = useCallback(() => {
     setTab('practice')
-    setPractice((p) => ({ key: p.key + 1, scope: 'group' }))
+    setPractice((p) => ({ key: p.key + 1, scope: 'picked' }))
   }, [])
 
   return (
@@ -57,8 +62,9 @@ export default function App() {
         {tab === 'lessons' && (
           <LessonsView
             state={state}
-            currentGroup={currentGroup}
-            unlockedChars={unlockedChars}
+            groups={letterGroups.groups}
+            onToggle={letterGroups.toggle}
+            onSet={letterGroups.setGroups}
             onPractice={goPractice}
           />
         )}
@@ -66,8 +72,7 @@ export default function App() {
           <PracticeView
             key={practice.key}
             state={state}
-            unlockedChars={unlockedChars}
-            currentGroup={currentGroup}
+            pickedChars={pickedChars}
             record={record}
             initialScope={practice.scope}
           />
@@ -75,17 +80,15 @@ export default function App() {
         {tab === 'dictation' && (
           <DictationView
             state={state}
-            unlockedChars={unlockedChars}
             record={record}
             recordVocab={recordVocab}
           />
         )}
-        {tab === 'chart' && <ChartView state={state} isUnlocked={isUnlocked} />}
+        {tab === 'chart' && <ChartView state={state} />}
         {tab === 'vocab' && <VocabView state={state} recordVocab={recordVocab} />}
         {tab === 'progress' && (
           <ProgressView
             state={state}
-            unlockedChars={unlockedChars}
             onReset={reset}
             onRestore={restore}
             onBackedUp={markBackedUp}

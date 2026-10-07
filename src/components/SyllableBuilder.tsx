@@ -4,18 +4,18 @@ import { speak } from '../lib/speech'
 import { compose, isInitial, isMedial, romanize } from '../lib/syllable'
 
 interface Props {
-  /** 已解鎖的字母，拼字盤只會出現這些 */
-  unlockedChars: string[]
+  /** 拼字盤會出現的字母 */
+  chars: string[]
 }
 
 /** 自由拼字盤：子音配母音，字會即時組出來 */
-export function SyllableBuilder({ unlockedChars }: Props) {
+export function SyllableBuilder({ chars }: Props) {
   // ㅇ 在字首不發音，母音要單獨成字就得靠它，所以一開始就給
   const initials = useMemo(
-    () => [...new Set([SILENT_INITIAL, ...unlockedChars.filter(isInitial)])],
-    [unlockedChars],
+    () => [...new Set([SILENT_INITIAL, ...chars.filter(isInitial)])],
+    [chars],
   )
-  const medials = useMemo(() => unlockedChars.filter(isMedial), [unlockedChars])
+  const medials = useMemo(() => chars.filter(isMedial), [chars])
 
   const [initial, setInitial] = useState(initials[0])
   const [medial, setMedial] = useState(medials[0])

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { GROUPS, type LetterGroup } from '../data/groups'
+import { ALL_CHARS } from '../data/groups'
 import { LETTER_BY_CHAR, letterSound } from '../data/hangul'
 import { speak, unlock } from '../lib/speech'
 import { QuestionCard } from './QuestionCard'
@@ -10,12 +10,12 @@ import type { ProgressState } from '../hooks/useProgress'
 
 const SESSION_SIZE = 12
 
-export type PracticeScope = 'group' | 'all'
+export type PracticeScope = 'picked' | 'all'
 
 interface Props {
   state: ProgressState
-  unlockedChars: string[]
-  currentGroup: LetterGroup
+  /** 「課程」裡勾選的組別的字母 */
+  pickedChars: string[]
   record: (targets: string[], correct: boolean) => void
   /**
    * 從「課程」按練習進來時直接開一輪。App 會換掉 key 讓這個元件重新掛載，
@@ -29,42 +29,29 @@ interface Session {
   questions: Question[]
   /** 開場時各字母的分數，結算時拿來比對誰升級了 */
   before: Record<string, number>
-  unlockedBefore: number
 }
 
-/** 抽一輪題目。優先練還沒精通的字母，整組都精通了就當純複習 */
-function buildSession(
-  scope: PracticeScope,
-  state: ProgressState,
-  currentGroup: LetterGroup,
-  unlockedChars: string[],
-): Session {
-  const scopeChars = scope === 'group' ? currentGroup.chars : unlockedChars
+/** 抽一輪題目。優先練還沒精通的字母，全部都精通了就當純複習 */
+function buildSession(scope: PracticeScope, state: ProgressState, pickedChars: string[]): Session {
+  const scopeChars = scope === 'picked' ? pickedChars : ALL_CHARS
   const notMastered = scopeChars.filter((c) => !isMastered(state.scores[c]))
   return {
     scope,
     questions: generateSession(
       {
-        pool: unlockedChars,
+        pool: scopeChars,
         focus: notMastered.length > 0 ? notMastered : scopeChars,
         scores: state.scores,
       },
       SESSION_SIZE,
     ),
     before: { ...state.scores },
-    unlockedBefore: state.unlockedCount,
   }
 }
 
-export function PracticeView({
-  state,
-  unlockedChars,
-  currentGroup,
-  record,
-  initialScope,
-}: Props) {
+export function PracticeView({ state, pickedChars, record, initialScope }: Props) {
   const [session, setSession] = useState<Session | null>(() =>
-    initialScope ? buildSession(initialScope, state, currentGroup, unlockedChars) : null,
+    initialScope ? buildSession(initialScope, state, pickedChars) : null,
   )
   const [index, setIndex] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -73,12 +60,12 @@ export function PracticeView({
   const start = useCallback(
     (scope: PracticeScope) => {
       unlock()
-      setSession(buildSession(scope, state, currentGroup, unlockedChars))
+      setSession(buildSession(scope, state, pickedChars))
       setIndex(0)
       setPicked(null)
       setCorrectCount(0)
     },
-    [state, currentGroup, unlockedChars],
+    [state, pickedChars],
   )
 
   const question = session?.questions[index]
@@ -99,14 +86,7 @@ export function PracticeView({
 
   // ── 開始畫面 ───────────────────────────────────────────────
   if (!session) {
-    return (
-      <StartScreen
-        state={state}
-        currentGroup={currentGroup}
-        unlockedChars={unlockedChars}
-        onStart={start}
-      />
-    )
+    return <StartScreen state={state} pickedChars={pickedChars} onStart={start} />
   }
 
   // ── 結算畫面 ───────────────────────────────────────────────
@@ -142,35 +122,41 @@ export function PracticeView({
 
 function StartScreen({
   state,
-  currentGroup,
-  unlockedChars,
+  pickedChars,
   onStart,
 }: {
   state: ProgressState
-  currentGroup: LetterGroup
-  unlockedChars: string[]
+  pickedChars: string[]
   onStart: (scope: PracticeScope) => void
 }) {
-  const remaining = currentGroup.chars.filter((c) => !isMastered(state.scores[c]))
+  const remaining = pickedChars.filter((c) => !isMastered(state.scores[c]))
 
   return (
     <div className="space-y-5">
       <p className="text-sm leading-relaxed text-ink-3">
-        題目只會用已經解鎖的字母。答對該字母 +1 分，答錯 −1 分，滿 6 分就是精通。拼字題一次會考到子音和母音兩個字母。
+        題目和干擾選項都只會用你選的字母。答對該字母 +1 分，答錯 −1 分，滿 6
+        分就是精通。拼字題一次會考到子音和母音兩個字母。
       </p>
 
       <button
         type="button"
-        onClick={() => onStart('group')}
-        className="w-full rounded-2xl bg-accent-mid p-4 text-left active:bg-accent-deep"
+        disabled={pickedChars.length === 0}
+        onClick={() => onStart('picked')}
+        className="w-full rounded-2xl bg-accent-mid p-4 text-left active:bg-accent-deep disabled:opacity-50"
       >
-        <div className="text-base font-semibold text-ink">
-          練這一組（第 {currentGroup.id} 組・{currentGroup.title}）
-        </div>
-        <div className="font-kr mt-1 text-xl text-accent-pale">{currentGroup.chars.join('　')}</div>
-        <div className="mt-1 text-xs text-accent-pale/90">
-          {remaining.length > 0 ? `還有 ${remaining.length} 個沒精通` : '這組已全部精通，可以純複習'}
-        </div>
+        <div className="text-base font-semibold text-ink">練勾選的字母</div>
+        {pickedChars.length === 0 ? (
+          <div className="mt-1 text-xs text-accent-pale/90">先到「課程」勾要練哪幾組</div>
+        ) : (
+          <>
+            <div className="font-kr mt-1 text-xl text-accent-pale">{pickedChars.join(' ')}</div>
+            <div className="mt-1 text-xs text-accent-pale/90">
+              {remaining.length > 0
+                ? `還有 ${remaining.length} 個沒精通`
+                : '已全部精通，可以純複習'}
+            </div>
+          </>
+        )}
       </button>
 
       <button
@@ -178,10 +164,8 @@ function StartScreen({
         onClick={() => onStart('all')}
         className="w-full rounded-2xl border border-line bg-surface p-4 text-left active:bg-surface-2"
       >
-        <div className="text-base font-semibold text-ink">複習全部已解鎖</div>
-        <div className="mt-1 text-xs text-ink-3">
-          {unlockedChars.length} 個字母混合出題，把舊的也顧一下
-        </div>
+        <div className="text-base font-semibold text-ink">全部 {ALL_CHARS.length} 個混合</div>
+        <div className="mt-1 text-xs text-ink-3">所有字母一起出題，把舊的也顧一下</div>
       </button>
     </div>
   )
@@ -201,8 +185,6 @@ function Summary({
   onExit: () => void
 }) {
   const total = session.questions.length
-  const unlockedNew = state.unlockedCount > session.unlockedBefore
-  const newGroup = GROUPS[state.unlockedCount - 1]
 
   // 這一輪碰到的字母，依變化排序
   const touched = [...new Set(session.questions.flatMap((q) => q.targets))]
@@ -223,23 +205,13 @@ function Summary({
         </p>
       </div>
 
-      {unlockedNew && (
-        <div className="animate-pop rounded-2xl border border-ok/60 bg-ok/15 p-4 text-center">
-          <div className="text-2xl">🔓</div>
-          <div className="mt-1 font-semibold text-ok-text">
-            解鎖第 {newGroup.id} 組・{newGroup.title}
-          </div>
-          <div className="font-kr mt-1 text-xl text-ink">{newGroup.chars.join('　')}</div>
-        </div>
-      )}
-
       <section>
         <h3 className="mb-2 text-sm font-semibold text-ink-2">這一輪的字母</h3>
         <div className="space-y-2">
           {touched.map(({ char, before, after }) => {
             const letter = LETTER_BY_CHAR.get(char)!
             const delta = after - before
-            const level = levelOf(after, true)
+            const level = levelOf(after)
             return (
               <button
                 key={char}
@@ -256,9 +228,7 @@ function Summary({
                 >
                   {delta > 0 ? `+${delta}` : delta}
                 </span>
-                <span className="w-12 text-right text-xs text-ink-3">
-                  {LEVEL_LABEL[level]}
-                </span>
+                <span className="w-12 text-right text-xs text-ink-3">{LEVEL_LABEL[level]}</span>
               </button>
             )
           })}

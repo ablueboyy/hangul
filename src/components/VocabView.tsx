@@ -209,7 +209,7 @@ export function WeekPicker({
 }
 
 function WordRow({ word, score }: { word: VocabWord; score: number }) {
-  const level = levelOf(score, true)
+  const level = levelOf(score)
   return (
     <button
       type="button"
@@ -278,7 +278,7 @@ export function VocabSummary({
           {touched.map(({ ko, before, after }) => {
             const word = WORD_BY_KO.get(ko)
             const delta = after - before
-            const level = levelOf(after, true)
+            const level = levelOf(after)
             return (
               <button
                 key={ko}

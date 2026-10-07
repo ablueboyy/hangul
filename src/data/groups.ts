@@ -1,6 +1,6 @@
 /**
- * 課程分組：一次解鎖 5 個字母，整組都練到「精通」才會開下一組。
- * 順序是先把 10 個基本母音學完，再進子音 —
+ * 課程分組：5 個字母一組，全部都開著，想練哪幾組就勾哪幾組。
+ * 建議的順序是先把 10 個基本母音學完，再進子音 —
  * 母音要寫成字的時候前面要加一個不發音的 ㅇ（ㅏ → 아），
  * 所以第一組就已經可以出「這個字怎麼念」的題目了。
  */
@@ -63,13 +63,15 @@ export const GROUPS: LetterGroup[] = [
   },
 ]
 
-/** 母音單獨成字時借用的無聲子音 — 第 1 組就會用到，但它要到第 4 組才正式解鎖計分 */
+/** 母音單獨成字時借用的無聲子音 — 只練母音時也會用到它 */
 export const SILENT_INITIAL = 'ㅇ'
 
 export const GROUP_OF_CHAR = new Map<string, number>(
   GROUPS.flatMap((g) => g.chars.map((c) => [c, g.id] as const)),
 )
 
-/** 前 n 組的所有字母 */
-export const charsUpTo = (unlockedCount: number): string[] =>
-  GROUPS.slice(0, unlockedCount).flatMap((g) => g.chars)
+export const ALL_CHARS: string[] = GROUPS.flatMap((g) => g.chars)
+
+/** 指定組別的所有字母（照組別順序） */
+export const charsOfGroups = (ids: number[]): string[] =>
+  GROUPS.filter((g) => ids.includes(g.id)).flatMap((g) => g.chars)

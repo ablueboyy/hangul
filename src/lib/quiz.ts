@@ -1,5 +1,5 @@
 /**
- * 出題引擎。只會用已解鎖的字母出題，而且每一題都有唯一正確答案。
+ * 出題引擎。只用勾選的字母出題，而且每一題都有唯一正確答案。
  * 每題會標記它「考到哪幾個字母」（targets），答完就照這些字母加減熟練度。
  */
 import { LETTER_BY_CHAR, letterSound, quizRoman, soundOfChar, type Letter } from '../data/hangul'
@@ -17,14 +17,16 @@ export type QuestionKind =
   | 'syllableParts'
 
 export interface QuizContext {
-  /** 已解鎖的字母 */
+  /** 這一輪勾選的字母，干擾選項也只從這裡抽 */
   pool: string[]
-  /** 這一輪主攻的字母（通常是目前這組還沒精通的） */
+  /** 這一輪主攻的字母（通常是勾選範圍裡還沒精通的） */
   focus: string[]
   scores: Record<string, number>
 }
 
 const letterOf = (char: string): Letter => LETTER_BY_CHAR.get(char)!
+
+const FALLBACK_MEDIALS = ['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ']
 
 // ── 各種題型 ──────────────────────────────────────────────────
 
@@ -215,14 +217,16 @@ function makeQuestion(ctx: QuizContext): Question {
   const initials = [
     ...new Set([...pool.filter(isInitial), SILENT_INITIAL]),
   ]
-  const medials = pool.filter(isMedial)
+  // 只勾子音的時候沒有母音可以拼字，借幾個基本母音來搭；
+  // 借來的不在 pool 裡，所以不會被計分（見 syllableQuestion 的 targets）
+  const poolMedials = pool.filter(isMedial)
+  const medials = poolMedials.length > 0 ? poolMedials : FALLBACK_MEDIALS
 
   const kinds: QuestionKind[] = ['letterToRoman', 'romanToLetter']
   // ㅇ 在字首不發音，放聽力題等於叫人聽一個不存在的音
   if (target !== SILENT_INITIAL) kinds.push('listen')
 
-  const canBuildSyllable =
-    medials.length > 0 && (isMedial(target) ? initials.length > 0 : initials.includes(target))
+  const canBuildSyllable = isMedial(target) || initials.includes(target)
   if (canBuildSyllable) {
     kinds.push('syllableParts')
     if (target !== SILENT_INITIAL) {

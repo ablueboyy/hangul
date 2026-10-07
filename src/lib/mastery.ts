@@ -1,16 +1,14 @@
 /**
- * 熟練度：解鎖後從 0 分開始爬，答對 +1、答錯 −1，滿分 6 分＝精通。
- * 一組 5 個字母全部精通，下一組才會解鎖。
- * 已解鎖的組不會因為舊字母掉分而重新上鎖 —— 掉分只是提醒你回頭補。
+ * 熟練度：從 0 分開始爬，答對 +1、答錯 −1，滿分 6 分＝精通。
+ * 字母和單字都用同一套，而且都沒有解鎖 —— 想練哪些就自己勾。
  */
 
 export const MAX_SCORE = 6
 export const SCORE_FAMILIAR = 3
 
-export type Level = 'locked' | 'novice' | 'familiar' | 'mastered'
+export type Level = 'novice' | 'familiar' | 'mastered'
 
 export const LEVEL_LABEL: Record<Level, string> = {
-  locked: '未解鎖',
   novice: '入門',
   familiar: '認識',
   mastered: '精通',
@@ -18,21 +16,18 @@ export const LEVEL_LABEL: Record<Level, string> = {
 
 /** 給徽章用的 Tailwind class */
 export const LEVEL_BADGE: Record<Level, string> = {
-  locked: 'bg-surface-2 text-ink-4',
   novice: 'bg-surface-3 text-ink-2',
   familiar: 'bg-accent/20 text-accent',
   mastered: 'bg-ok/20 text-ok-text',
 }
 
 export const LEVEL_BAR: Record<Level, string> = {
-  locked: 'bg-surface-3',
   novice: 'bg-ink-4',
   familiar: 'bg-accent',
   mastered: 'bg-ok',
 }
 
-export function levelOf(score: number | undefined, unlocked: boolean): Level {
-  if (!unlocked) return 'locked'
+export function levelOf(score: number | undefined): Level {
   const s = score ?? 0
   if (s >= MAX_SCORE) return 'mastered'
   if (s >= SCORE_FAMILIAR) return 'familiar'

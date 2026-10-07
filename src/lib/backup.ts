@@ -3,6 +3,7 @@
  *
  *   HG2-<40 個字母的分數>-<解鎖組數>-<連續天數>-<最後練習日>-<總題數>-<答對數>-<單字分數>-<檢查碼>
  *
+ * 「解鎖組數」是闖關制留下來的欄位，字母全開之後已經不會變，留著只是為了格式不變。
  * 單字分數是每週一段、用 . 隔開，段內一個字一位數字，照 vocab.ts 的順序排。
  * 舊的 HG1 備份碼（沒有單字那一段）還是讀得進來，單字進度當作全新開始。
  *
@@ -164,5 +165,5 @@ export function decodeBackup(raw: string): DecodeResult {
 export function describe(state: ProgressState): string {
   const mastered = Object.values(state.scores).filter((s) => s >= MAX_SCORE).length
   const vocab = Object.values(state.vocabScores).filter((s) => s >= MAX_SCORE).length
-  return `第 ${state.unlockedCount} 組・已精通 ${mastered} 個字母、${vocab} 個單字・答過 ${state.totalAnswers} 題`
+  return `已精通 ${mastered} 個字母、${vocab} 個單字・答過 ${state.totalAnswers} 題`
 }

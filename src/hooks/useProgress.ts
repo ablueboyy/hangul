@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { GROUPS, charsUpTo } from '../data/groups'
-import { isMastered, nextScore } from '../lib/mastery'
+import { useCallback, useEffect, useState } from 'react'
+import { GROUPS } from '../data/groups'
+import { nextScore } from '../lib/mastery'
 
 const STORAGE_KEY = 'hangul.progress.v2'
 
 export interface ProgressState {
   /** 字母 → 熟練度分數 0..MAX_SCORE */
   scores: Record<string, number>
-  /** 單字（韓文原文）→ 熟練度分數 0..MAX_SCORE。和字母的解鎖闖關無關 */
+  /** 單字（韓文原文）→ 熟練度分數 0..MAX_SCORE */
   vocabScores: Record<string, number>
-  /** 已解鎖幾組（至少 1） */
+  /**
+   * 以前闖關制「解鎖到第幾組」，現在字母全開、不會再變了。
+   * 留著是因為備份碼格式裡有這一格，另外第一次打開選組畫面時拿來決定預設勾哪幾組。
+   */
   unlockedCount: number
   /** YYYY-MM-DD */
   lastStudyDate: string | null
@@ -55,17 +58,6 @@ function load(): ProgressState {
   }
 }
 
-/**
- * 目前這組全部精通就解鎖下一組。
- * unlockedCount 只增不減 —— 舊字母之後掉分不會把已開的組收回去。
- */
-function unlockIfComplete(state: ProgressState): number {
-  const current = GROUPS[state.unlockedCount - 1]
-  if (!current) return state.unlockedCount
-  const done = current.chars.every((c) => isMastered(state.scores[c]))
-  return done ? Math.min(state.unlockedCount + 1, GROUPS.length) : state.unlockedCount
-}
-
 /** 答完一題共通的部分：連續天數和總計，字母題和單字題都要算 */
 function tally(prev: ProgressState, correct: boolean): ProgressState {
   const today = dateKey()
@@ -100,12 +92,11 @@ export function useProgress() {
     setState((prev) => {
       const scores = { ...prev.scores }
       for (const char of targets) scores[char] = nextScore(scores[char], correct)
-      const next = { ...tally(prev, correct), scores }
-      return { ...next, unlockedCount: unlockIfComplete(next) }
+      return { ...tally(prev, correct), scores }
     })
   }, [])
 
-  /** 答完一題單字題。單字不參與字母的解鎖闖關，所以不動 unlockedCount */
+  /** 答完一題單字題 */
   const recordVocab = useCallback((words: string[], correct: boolean) => {
     setState((prev) => {
       const vocabScores = { ...prev.vocabScores }
@@ -124,16 +115,6 @@ export function useProgress() {
     [],
   )
 
-  const unlockedChars = useMemo(() => charsUpTo(state.unlockedCount), [state.unlockedCount])
-  const isUnlocked = useCallback(
-    (char: string) => unlockedChars.includes(char),
-    [unlockedChars],
-  )
-
-  /** 目前正在練的那一組（全部通關後停在最後一組） */
-  const currentGroup = GROUPS[state.unlockedCount - 1]
-  const allDone = currentGroup.chars.every((c) => isMastered(state.scores[c]))
-
   return {
     state,
     record,
@@ -141,9 +122,5 @@ export function useProgress() {
     reset,
     restore,
     markBackedUp,
-    unlockedChars,
-    isUnlocked,
-    currentGroup,
-    allDone,
   }
 }
