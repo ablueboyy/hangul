@@ -20,6 +20,7 @@ import argparse
 import asyncio
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -28,6 +29,7 @@ import edge_tts
 ROOT = Path(__file__).resolve().parent.parent
 HANGUL_TS = ROOT / "src" / "data" / "hangul.ts"
 VOCAB_TS = ROOT / "src" / "data" / "vocab.ts"
+EXAM_TS = ROOT / "src" / "data" / "exam.ts"
 OUT_DIR = ROOT / "public" / "audio"
 MANIFEST = ROOT / "src" / "data" / "audio-manifest.json"
 
@@ -67,13 +69,22 @@ def collect_texts() -> list[tuple[str, str]]:
 
     # 每週單字庫。課上到哪就填到哪，所以這裡不檢查數量
     vocab = re.findall(r"ko: '([^']+)'", VOCAB_TS.read_text(encoding="utf-8"))
-    print(f"字母 {len(names)} 個、例詞 {len(words)} 個、單字 {len(vocab)} 個")
+    # 期中考造句：句型會換名詞，組合是 TS 算出來的，所以直接叫 node 載入 exam.ts 列出全部
+    # （node 22.18 起可以直接跑 .ts，型別會被拿掉）
+    sentences = json.loads(
+        subprocess.run(
+            ["node", "-e", f"import({json.dumps(EXAM_TS.as_uri())}).then(m => console.log("
+             "JSON.stringify(m.allSentences().flatMap(s => [s.ko, ...(s.alts ?? [])]))))"],
+            capture_output=True, text=True, check=True,
+        ).stdout
+    )
+    print(f"字母 {len(names)} 個、例詞 {len(words)} 個、單字 {len(vocab)} 個、造句 {len(sentences)} 句")
 
     syllables = [compose(i, m) for i in INITIALS for m in MEDIALS]
     # 聽寫的字母模式會出帶收音的音節（19 × 21 × 7 = 2793 個）
     with_final = [compose(i, m, f) for i in INITIALS for m in MEDIALS for f in SOUND_FINALS]
     seen: dict[str, str] = {}
-    for t in [*syllables, *names, *sounds, *words, *vocab]:
+    for t in [*syllables, *names, *sounds, *words, *vocab, *sentences]:
         seen.setdefault(t, clip_key(t))
     # 收音音節另外放 final/：它們不進安裝包（太大，iOS 會更新不完），
     # 由 App 在背景慢慢下載快取，見 src/lib/pwa.ts

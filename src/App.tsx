@@ -5,6 +5,8 @@ import { ChartView } from './components/ChartView'
 import { VocabView } from './components/VocabView'
 import { DictationView } from './components/DictationView'
 import { ProgressView } from './components/ProgressView'
+import { ExamView } from './components/ExamView'
+import { MoreView, type MoreTab } from './components/MoreView'
 import { useProgress } from './hooks/useProgress'
 import { useLetterGroups } from './hooks/useLetterGroups'
 import { charsOfGroups } from './data/groups'
@@ -12,19 +14,20 @@ import { useTheme } from './hooks/useTheme'
 import { ThemeCycleButton } from './components/ThemeToggle'
 import { unlock } from './lib/speech'
 
-type Tab = 'lessons' | 'practice' | 'dictation' | 'chart' | 'vocab' | 'progress'
+type Tab = 'exam' | 'vocab' | 'chart' | 'more' | MoreTab | 'practice'
 
-// 字母練習不佔底部分頁，從「課程」的練習按鈕進去；那個位置讓給聽寫
+// 底部只放最常用的四個；字母課程、聽寫、進度收進「更多」，字母練習從課程點進去
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'lessons', label: '課程', icon: '📚' },
-  { id: 'dictation', label: '聽寫', icon: '✍️' },
-  { id: 'chart', label: '字母表', icon: '가' },
+  { id: 'exam', label: '期中考', icon: '📝' },
   { id: 'vocab', label: '單字', icon: '📖' },
-  { id: 'progress', label: '進度', icon: '📈' },
+  { id: 'chart', label: '字母表', icon: '가' },
+  { id: 'more', label: '更多', icon: '☰' },
 ]
 
+const UNDER_MORE: Tab[] = ['lessons', 'practice', 'dictation', 'progress']
+
 export default function App() {
-  const [tab, setTab] = useState<Tab>('lessons')
+  const [tab, setTab] = useState<Tab>('exam')
   // 換掉 key 就能讓「練習」分頁重新掛載並直接開一輪；直接點分頁則沿用原本的 session
   const [practice, setPractice] = useState<{ key: number; scope: PracticeScope | null }>({
     key: 0,
@@ -59,6 +62,8 @@ export default function App() {
       </header>
 
       <main className="flex-1 px-4 pb-28 pt-5">
+        {tab === 'exam' && <ExamView state={state} record={record} recordVocab={recordVocab} />}
+        {tab === 'more' && <MoreView onOpen={setTab} />}
         {tab === 'lessons' && (
           <LessonsView
             state={state}
@@ -99,10 +104,10 @@ export default function App() {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t border-line-soft bg-page/95 px-2 pb-safe pt-2 backdrop-blur">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-4">
           {TABS.map((t) => {
-            // 字母練習是從課程點進去的，所以在練習時亮「課程」
-            const active = tab === t.id || (tab === 'practice' && t.id === 'lessons')
+            // 收在「更多」裡的頁面，底部亮「更多」
+            const active = tab === t.id || (t.id === 'more' && UNDER_MORE.includes(tab))
             return (
               <button
                 key={t.id}

@@ -75,3 +75,17 @@ export function romanize(initial: string, medial: string, final?: string): strin
 
 export const initialRoman = (char: string) => INITIAL_ROMAN[char] ?? ''
 export const medialRoman = (char: string) => MEDIAL_ROMAN[char] ?? ''
+
+/** compose 的反過來：把音節拆回初聲、中聲、收音。收音只認 7 個代表音，其他的回傳 null */
+export function decompose(text: string): { initial: string; medial: string; final?: string } | null {
+  const code = text.length === 1 ? text.charCodeAt(0) - SYLLABLE_BASE : -1
+  if (code < 0 || code >= 19 * 21 * 28) return null
+  const f = code % 28
+  const final = Object.keys(FINAL_INDEX).find((k) => FINAL_INDEX[k] === f)
+  if (f !== 0 && !final) return null
+  return {
+    initial: INITIALS[Math.floor(code / (21 * 28))],
+    medial: MEDIALS[Math.floor(code / 28) % 21],
+    final,
+  }
+}
