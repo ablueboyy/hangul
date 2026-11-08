@@ -296,8 +296,44 @@ export const VOCAB_WEEKS: VocabWeek[] = [
       { ko: '폐', roman: 'pye', meaning: '肺', hanja: '肺' },
     ],
   },
-  // 第 8～16 週：課上到了再把單字填進來
-  ...Array.from({ length: TOTAL_WEEKS - 7 }, (_, i) => ({ week: i + 8, words: [] })),
+  // 第 8 週：期中考
+  { week: 8, words: [] },
+  {
+    week: 9,
+    note: '複合母音 ㅢ（의사、의미、무늬、희망），還有 ㅟ ㅝ ㅙ（귀、뭐、왜、훠궈）和疑問詞。',
+    // 課本這週還有 어디（哪裡），但第 4 週已經有了，ko 不能重複所以沒放
+    words: [
+      { ko: '훠궈', roman: 'hwogwo', meaning: '火鍋', en: 'huoguo' },
+      { ko: '의사', roman: 'uisa', meaning: '醫師', hanja: '醫師' },
+      // 意思不能和下面的 의의（意義）太像，所以標出中文的說法
+      { ko: '의미', roman: 'uimi', meaning: '意思（意味）', hanja: '意味' },
+      { ko: '이의', roman: 'iui', meaning: '異議', hanja: '異議' },
+      { ko: '의의', roman: 'uiui', meaning: '意義', hanja: '意義' },
+      { ko: '예의', roman: 'yeui', meaning: '禮儀', hanja: '禮儀' },
+      { ko: '조사', roman: 'josa', meaning: '助詞', hanja: '助詞' },
+      { ko: '무늬', roman: 'munui', meaning: '花紋' },
+      { ko: '희다', roman: 'huida', meaning: '雪白' },
+      { ko: '희망', roman: 'huimang', meaning: '希望', hanja: '希望' },
+      { ko: '함께 해요', roman: 'hamkke haeyo', meaning: '一起做吧' },
+      { ko: '귀', roman: 'gwi', meaning: '耳朵' },
+      { ko: '배', roman: 'bae', meaning: '船' },
+      { ko: '과', roman: 'gwa', meaning: '課', hanja: '課' },
+      { ko: '왜', roman: 'wae', meaning: '為什麼' },
+      { ko: '누구', roman: 'nugu', meaning: '誰' },
+      { ko: '언제', roman: 'eonje', meaning: '何時' },
+      { ko: '뭐', roman: 'mwo', meaning: '什麼' },
+      { ko: '그렇게', roman: 'geureoke', meaning: '那樣地' },
+      { ko: '시제', roman: 'sije', meaning: '時制', hanja: '時制' },
+      { ko: '남녀', roman: 'namnyeo', meaning: '男女', hanja: '男女' },
+      { ko: '남자', roman: 'namja', meaning: '男子', hanja: '男子' },
+      { ko: '컵', roman: 'keop', meaning: '杯子', en: 'cup' },
+      { ko: '부엌', roman: 'bueok', meaning: '廚房' },
+      { ko: '결혼', roman: 'gyeolhon', meaning: '結婚', hanja: '結婚' },
+      { ko: '졸업', roman: 'joreop', meaning: '畢業（卒業）', hanja: '卒業' },
+    ],
+  },
+  // 第 10～16 週：課上到了再把單字填進來
+  ...Array.from({ length: TOTAL_WEEKS - 9 }, (_, i) => ({ week: i + 10, words: [] })),
 ]
 
 export const WEEK_BY_NUMBER = new Map(VOCAB_WEEKS.map((w) => [w.week, w]))
